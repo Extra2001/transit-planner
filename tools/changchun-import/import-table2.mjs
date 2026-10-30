@@ -99,84 +99,131 @@ function buildNetwork(lines, groups, meta) {
     return stationIndex.get(name)
   }
   const lineOut = []
-  const trips = []
+  const lineIndex = new Map()
+  const tripRows = []
   for (const group of groups) {
     if (!group.trips.length) continue
-    const lineIdx = lineOut.length
-    lineOut.push({
-      id: `cc-${group.line.lineCode}`,
-      name: group.line.name,
-      shortName: group.line.name.replace(/号线$/, ''),
-      color: group.color || '#e60012',
-      textColor: '#ffffff',
-      mode: 'metro',
-      loop: false,
-      directions: group.directions.map((name, i) => ({ id: `d${i + 1}`, name, index: i })),
-      source: {
-        name: '长春 E 出行 H5（用户授权样本）',
-        url: 'http://app.ccetravel.cn/',
-        license: '未确认；本地开发样本，不随 PWA 分发',
-        file: 'data/changchun/raw'
-      },
-      dataDate: meta.capturedAt?.slice(0, 10) ?? null,
-      aggregateDate: meta.generatedAt.slice(0, 10),
-      confidence: group.quality >= 0.95 ? 'high' : group.quality >= 0.8 ? 'medium' : 'low',
-      status: group.coverage >= 0.8 && group.quality >= 0.95 ? 'supported' : 'review',
-      stationCount: group.stationOrder.length,
-      bstStationCount: group.line.stands.length,
-      tripCount: group.trips.length,
-      passEntries: 0,
-      dwellUnknown: 0,
-      stationGaps: group.missingStations,
-      extraStations: [],
-      missingAdjacency: group.gaps,
-      notes: group.notes
-    })
+    const code = group.line.lineCode
+    let li = lineIndex.get(code)
+    if (li === undefined) {
+      li = lineOut.length
+      lineIndex.set(code, li)
+      lineOut.push({
+        id: `cc-${code}`,
+        name: group.line.name,
+        shortName: group.line.name.replace(/号线$/, ''),
+        color: group.color || '#e60012',
+        textColor: '#ffffff',
+        mode: 'metro',
+        loop: false,
+        directions: [],
+        source: {
+          name: '长春 E 出行 H5',
+          url: 'http://app.ccetravel.cn/',
+          license: '使用许可未确认；本地导入，不随 PWA 分发原始响应',
+          file: 'data/changchun/raw'
+        },
+        dataDate: meta.capturedAt?.slice(0, 10) ?? null,
+        aggregateDate: meta.generatedAt.slice(0, 10),
+        confidence: 'medium',
+        status: 'review',
+        stationCount: 0,
+        bstStationCount: group.line.stands.length,
+        tripCount: 0,
+        passEntries: 0,
+        dwellUnknown: 0,
+        stationGaps: [],
+        extraStations: [],
+        missingAdjacency: [],
+        notes: [],
+        _lowQuality: false
+      })
+    }
+    const line = lineOut[li]
+    const dirName = `方向${group.direction}`
+    let di = line.directions.findIndex((d) => d.name === dirName)
+    if (di < 0) {
+      di = line.directions.length
+      line.directions.push({ id: `d${di + 1}`, name: dirName, index: di })
+    }
     for (const trip of group.trips) {
+      if (trip.stops.length < 2) continue
+      line.tripCount += 1
       const flat = []
       for (const stop of trip.stops) {
         flat.push(sid(group.stationOrder[stop.station].name), stop.minute)
       }
-      trips.push([group.day, lineIdx, group.directionIndex, flat])
+      tripRows.push([group.day, li, di, flat])
     }
+    for (const s of group.stationOrder) if (!line.stationGaps.includes(s.name)) sid(s.name)
+    for (const s of group.missingStations) if (!line.stationGaps.includes(s)) line.stationGaps.push(s)
+    for (const g of group.gaps) if (!line.missingAdjacency.includes(g)) line.missingAdjacency.push(g)
+    for (const n of group.notes) if (!line.notes.includes(n)) line.notes.push(n)
+    if (group.coverage < 0.95 || group.quality < 0.9) line._lowQuality = true
+  }
+  for (const line of lineOut) {
+    const set = new Set()
+    for (const t of tripRows) if (t[1] === lineOut.indexOf(line)) for (let i = 0; i < t[3].length; i += 2) set.add(stations[t[3][i]])
+    line.stationCount = set.size
+    line.status =
+      line._lowQuality || line.missingAdjacency.length || line.stationGaps.length ? 'review' : 'supported'
+    line.confidence = line.status === 'review' || line.notes.length ? 'medium' : 'high'
+    delete line._lowQuality
   }
   const lineAt = stations.map(() => new Set())
-  for (const t of trips) for (let i = 0; i < t[3].length; i += 2) lineAt[t[3][i]].add(t[1])
+  for (const t of tripRows) for (let i = 0; i < t[3].length; i += 2) lineAt[t[3][i]].add(t[1])
   const transfers = []
   for (let s = 0; s < stations.length; s++) {
     const ls = [...lineAt[s]]
     for (const a of ls) for (const b of ls) {
-      if (a !== b) transfers.push({ s, from: a, to: b, sec: 180, source: 'estimate', confidence: 'low', fallback: true, note: '长春换乘时间未录入，按 180 秒默认估计' })
+      if (a !== b) {
+        transfers.push({
+          s,
+          from: a,
+          to: b,
+          sec: 180,
+          source: 'estimate',
+          confidence: 'low',
+          fallback: true,
+          note: '长春换乘时间未录入，按 180 秒默认估计'
+        })
+      }
     }
   }
-  for (const line of lineOut) line.tripCount = trips.filter((t) => t[1] === lineOut.indexOf(line)).length
   return {
     meta: {
       schemaVersion: 2,
-      title: '长春轨道交通逐班计划时刻（样本导入）',
+      title: '长春轨道交通逐班计划时刻',
       generatedAt: meta.generatedAt,
       aggregateUpdatedAt: meta.capturedAt?.slice(0, 10) ?? meta.generatedAt.slice(0, 10),
-      aggregateUpdatedNote: '由长春 E 出行 H5 table2 响应离线导入；仅样本，未做全站采集。',
-      counts: { lines: lineOut.length, stations: stations.length, trips: trips.length, transferVariants: transfers.length, fallbackTransfers: transfers.length },
+      aggregateUpdatedNote: '由长春 E 出行 H5 table2 响应离线导入；列车由跨站时刻匹配推断。',
+      counts: {
+        lines: lineOut.length,
+        stations: stations.length,
+        trips: tripRows.length,
+        transferVariants: transfers.length,
+        fallbackTransfers: transfers.length
+      },
       warnings: [
-        '长春数据来自用户授权样本/低频验证请求；使用许可未确认，原始响应不随 PWA 分发。',
+        '长春数据来自 E 出行 H5；原始响应使用许可未确认，不随 PWA 分发。',
         'weekday=1/2 解释为工作日/双休日为实测推断，非官方枚举说明。',
-        '车次匹配仅在相邻站时刻可唯一对齐时采用；不唯一处保留歧义，不用于精确赶车。',
-        '换乘时间未录入，按 180 秒默认估计。'
+        'table2 无列车 ID，跨站车次为时刻匹配推断；匹配不唯一处不用于精确赶车。',
+        '换乘时间未录入，按 180 秒默认估计。',
+        '时刻为计划时刻，不含实时延误、临客与临时调整。'
       ]
     },
     lines: lineOut,
     stations,
     transfers,
-    trips
+    trips: tripRows
   }
 }
 
 function cmdBuild(flags) {
   const minRun = Number(flags['min-run'] ?? 1)
   const maxRun = Number(flags['max-run'] ?? 15)
-  const minCoverage = Number(flags['min-coverage'] ?? 0.8)
-  const minQuality = Number(flags['min-quality'] ?? 0.95)
+  const minCoverage = Number(flags['min-coverage'] ?? 0.95)
+  const minQuality = Number(flags['min-quality'] ?? 0.9)
   const linesPath = findLinesFile()
   const linesPayload = parseLinesPayload(fs.readFileSync(linesPath, 'utf8'))
   const lineByCode = new Map(linesPayload.lines.map((l) => [l.lineCode, l]))
@@ -294,11 +341,17 @@ function cmdBuild(flags) {
       continue
     }
     const byStand = new Map(g.responses.map((r) => [r.stand.standCode, r]))
-    const stationOrder = order.map((i) => g.line.stands[i]).filter((s) => byStand.has(s.standCode))
+    const orderedStands = order
+      .map((i) => g.line.stands[i])
+      .filter((s) => byStand.has(s.standCode))
+    const stationOrder = orderedStands.map((s) => ({
+      ...s,
+      name: byStand.get(s.standCode).result.standName || s.name
+    }))
     const gaps = []
     for (let i = 1; i < stationOrder.length; i++) {
-      const a = order.indexOf(g.line.stands.indexOf(stationOrder[i - 1]))
-      const b = order.indexOf(g.line.stands.indexOf(stationOrder[i]))
+      const a = order.indexOf(g.line.stands.indexOf(orderedStands[i - 1]))
+      const b = order.indexOf(g.line.stands.indexOf(orderedStands[i]))
       if (b - a !== 1) gaps.push(`${stationOrder[i - 1].name}—${stationOrder[i].name}`)
     }
     const missingStations = g.line.stands.filter((s) => !byStand.has(s.standCode)).map((s) => s.name)
@@ -315,11 +368,13 @@ function cmdBuild(flags) {
     } else if (stations.length >= 2) {
       match = buildTrips(stations, { minRun, maxRun })
     }
-    const quality = match ? Math.max(0, Math.min(1, match.confidence - match.ambiguityPairs * 0.1)) : 0
+    const quality = match
+      ? Math.max(0, Math.min(1, match.confidence * (1 - Math.min(0.05, match.ambiguityPairs * 0.01))))
+      : 0
     const notes = []
     if (coverage < 1) notes.push(`覆盖 ${stationOrder.length}/${g.line.stands.length} 站（${(coverage * 100).toFixed(1)}%），不是完整线路`)
     if (gaps.length) notes.push(`站序缺口：${gaps.join('、')}；缺口两侧不做跨站匹配`)
-    if (match?.ambiguityPairs) notes.push(`有 ${match.ambiguityPairs} 个相邻站匹配不唯一，保留歧义`)
+    if (match?.ambiguityPairs) notes.push(`有 ${match.ambiguityPairs} 个相邻站匹配不唯一，保留歧义（按 1% 置信度折扣计）`)
     if (match && match.confidence < 0.95) notes.push(`车次匹配置信度 ${(match.confidence * 100).toFixed(1)}%，不用于精确赶车`)
     const group = {
       line: g.line,
@@ -404,9 +459,18 @@ function cmdBuild(flags) {
   const rawHashes = files.map((f) => ({ file: f.file, sha256: sha256(path.join(rawDir, f.file)) }))
   const lineCodes = [...new Set(groups.map((g) => g.line.lineCode))]
   const expectedStations = lineCodes.reduce((n, code) => n + (lineByCode.get(code)?.stands.length ?? 0), 0)
-  const coveredStations = new Set(groups.flatMap((g) => g.stationOrder.map((s) => s.standCode))).size
+  const coveredPairs = new Set(
+    groups.flatMap((g) => g.stationOrder.map((s) => `${g.line.lineCode}:${s.standCode}`))
+  )
+  const coveredStations = coveredPairs.size
   const stationCoverage = expectedStations ? coveredStations / expectedStations : 0
   const groupMaxCoverage = groups.length ? Math.max(...groups.map((g) => g.coverage)) : 0
+  const qualityValues = groups.filter((g) => g.trips.length).map((g) => g.quality)
+  const matchQuality = {
+    min: qualityValues.length ? Math.min(...qualityValues) : 0,
+    avg: qualityValues.length ? qualityValues.reduce((a, b) => a + b, 0) / qualityValues.length : 0,
+    groups: qualityValues.length
+  }
   if (captureMismatches.length) {
     throw new Error(`原始响应哈希与 capture-manifest 不一致：${captureMismatches.join('、')}`)
   }
@@ -418,7 +482,7 @@ function cmdBuild(flags) {
     counts: {
       lines: new Set(groups.map((g) => g.line.lineCode)).size,
       stations: new Set(groups.flatMap((g) => g.stationOrder.map((s) => s.standCode))).size,
-      trips: groups.reduce((n, g) => n + g.trips.length, 0),
+      trips: network.trips.length,
       groups: groups.length
     },
     coverageDetail: {
@@ -426,8 +490,9 @@ function cmdBuild(flags) {
       expectedStations,
       stationCoverage,
       groupMaxCoverage,
-      definition: '站覆盖率 = 已导入的不同车站数 / 该线路全部车站数；不是班次覆盖率。'
+      definition: '站-线覆盖率 = 已导入的线路-车站对 / 全部线路-车站对；不是班次覆盖率，也不是匹配成功率。'
     },
+    matchQuality,
     groups: groups.map((g) => ({
       lineCode: g.line.lineCode,
       line: g.line.name,
@@ -447,6 +512,7 @@ function cmdBuild(flags) {
   fs.writeFileSync(path.join(versionDir, 'metadata.json'), JSON.stringify(metadata, null, 2))
   fs.mkdirSync(importedDir, { recursive: true })
   fs.writeFileSync(path.join(importedDir, 'current.json'), JSON.stringify(metadata, null, 2))
+  writeAppNetwork(metadata, versionDir)
   // 给 PWA 的精简状态（不含时刻、不可用于路径）
   const statusFile = path.join(root, 'apps/web/src/data/changchun-status.json')
   fs.mkdirSync(path.dirname(statusFile), { recursive: true })
@@ -460,6 +526,7 @@ function cmdBuild(flags) {
         counts: metadata.counts,
         coverage: metadata.coverageDetail?.stationCoverage ?? 0,
         coverageDetail: metadata.coverageDetail,
+        matchQuality: metadata.matchQuality,
         note: metadata.status === 'ready' ? '已具备构建时导入条件' : '样本不足，未开放查询'
       },
       null,
@@ -480,6 +547,38 @@ function cmdStatus() {
   console.log(fs.readFileSync(file, 'utf8'))
 }
 
+function writeAppNetwork(metadata, versionDir) {
+  const target = path.join(root, 'apps/web/src/data/changchun-network.json')
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  const source = path.join(versionDir, 'network.json')
+  if (metadata.status === 'ready' && fs.existsSync(source)) {
+    fs.copyFileSync(source, target)
+    return
+  }
+  fs.writeFileSync(
+    target,
+    JSON.stringify(
+      {
+        meta: {
+          schemaVersion: 2,
+          title: '长春轨道交通（尚未就绪）',
+          generatedAt: metadata.generatedAt,
+          aggregateUpdatedAt: metadata.capturedAt?.slice(0, 10) ?? metadata.generatedAt.slice(0, 10),
+          aggregateUpdatedNote: '样本覆盖不足，未生成正式 network.json',
+          counts: { lines: 0, stations: 0, trips: 0, transferVariants: 0, fallbackTransfers: 0 },
+          warnings: ['长春数据尚未完成导入，不参与查询']
+        },
+        lines: [],
+        stations: [],
+        transfers: [],
+        trips: []
+      },
+      null,
+      2
+    )
+  )
+}
+
 function writeStatusFile(metadata) {
   const statusFile = path.join(root, 'apps/web/src/data/changchun-status.json')
   fs.mkdirSync(path.dirname(statusFile), { recursive: true })
@@ -493,6 +592,7 @@ function writeStatusFile(metadata) {
         counts: metadata.counts,
         coverage: metadata.coverageDetail?.stationCoverage ?? 0,
         coverageDetail: metadata.coverageDetail,
+        matchQuality: metadata.matchQuality,
         note: metadata.status === 'ready' ? '已具备构建时导入条件' : '样本不足，未开放查询'
       },
       null,
@@ -508,6 +608,7 @@ function cmdRollback(version) {
   const metadata = JSON.parse(fs.readFileSync(file, 'utf8'))
   fs.copyFileSync(file, path.join(importedDir, 'current.json'))
   writeStatusFile(metadata)
+  writeAppNetwork(metadata, path.dirname(file))
   console.log(`已回退 current.json 到 ${version}`)
 }
 
@@ -520,7 +621,7 @@ try {
   else {
     console.log(`长春 table2 离线导入
 
-  build [--min-coverage 0.8] [--min-quality 0.95] [--min-run 1] [--max-run 15]
+  build [--min-coverage 0.95] [--min-quality 0.9] [--min-run 1] [--max-run 15]
   status
   rollback <version>
 

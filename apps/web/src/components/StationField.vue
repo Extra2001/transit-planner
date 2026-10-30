@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { network, type LineInfo } from '@transit/core'
+import type { LineInfo } from '@transit/core'
+import { usePlannerStore } from '../stores/planner'
 
 const props = defineProps<{
   label: string
@@ -11,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+const store = usePlannerStore()
 
 const query = ref(props.modelValue)
 const open = ref(false)
@@ -25,9 +28,10 @@ watch(
 )
 
 const linesOf = (name: string): LineInfo[] => {
-  const idx = network.stationIndex.get(name)
+  const net = store.activeNetwork
+  const idx = net.stationIndex.get(name)
   if (idx === undefined) return []
-  return network.lineAt[idx].map((i) => network.lines[i])
+  return net.lineAt[idx].map((i) => net.lines[i])
 }
 
 const selectedLines = computed(() => linesOf(props.modelValue))

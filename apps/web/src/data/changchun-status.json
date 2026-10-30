@@ -1,20 +1,25 @@
 {
-  "status": "partial",
-  "version": "2026-10-30T06-31-27-124Z",
+  "status": "ready",
+  "version": "2026-10-30T07-18-34-081Z",
   "capturedAt": "2026-10-30T06:09:00Z",
   "counts": {
-    "lines": 1,
-    "stations": 2,
-    "trips": 173,
-    "groups": 3
+    "lines": 8,
+    "stations": 168,
+    "trips": 4843,
+    "groups": 32
   },
-  "coverage": 0.13333333333333333,
+  "coverage": 1,
   "coverageDetail": {
-    "coveredStations": 2,
-    "expectedStations": 15,
-    "stationCoverage": 0.13333333333333333,
-    "groupMaxCoverage": 0.13333333333333333,
-    "definition": "站覆盖率 = 已导入的不同车站数 / 该线路全部车站数；不是班次覆盖率。"
+    "coveredStations": 168,
+    "expectedStations": 168,
+    "stationCoverage": 1,
+    "groupMaxCoverage": 1,
+    "definition": "站-线覆盖率 = 已导入的线路-车站对 / 全部线路-车站对；不是班次覆盖率，也不是匹配成功率。"
   },
-  "note": "样本不足，未开放查询"
+  "matchQuality": {
+    "min": 0.9061402597402597,
+    "avg": 0.9727925697544518,
+    "groups": 32
+  },
+  "note": "已具备构建时导入条件"
 }

@@ -3,11 +3,11 @@ import { computed, ref, watch } from 'vue'
 import {
   formatClock,
   formatDuration,
-  network,
   type Itinerary,
   type Leg,
   type PlanResult
 } from '@transit/core'
+import { usePlannerStore } from '../stores/planner'
 import TransferNote from './TransferNote.vue'
 
 const props = defineProps<{
@@ -16,6 +16,7 @@ const props = defineProps<{
   departTime: string
 }>()
 
+const store = usePlannerStore()
 const tab = ref<'normal' | 'fast'>('normal')
 
 watch(
@@ -49,27 +50,27 @@ function clockWithDay(sec: number): string {
 }
 
 function lineName(idx: number): string {
-  return network.lines[idx]?.name ?? ''
+  return store.activeNetwork.lines[idx]?.name ?? ''
 }
 
 function lineShort(idx: number): string {
-  return network.lines[idx]?.shortName ?? ''
+  return store.activeNetwork.lines[idx]?.shortName ?? ''
 }
 
 function lineColor(idx: number): string {
-  return network.lines[idx]?.color ?? '#666'
+  return store.activeNetwork.lines[idx]?.color ?? '#666'
 }
 
 function lineTextColor(idx: number): string {
-  return network.lines[idx]?.textColor ?? '#fff'
+  return store.activeNetwork.lines[idx]?.textColor ?? '#fff'
 }
 
 function directionName(line: number, dir: number): string {
-  return network.lines[line]?.directions[dir]?.name ?? ''
+  return store.activeNetwork.lines[line]?.directions[dir]?.name ?? ''
 }
 
 function station(idx: number): string {
-  return network.stations[idx] ?? ''
+  return store.activeNetwork.stations[idx] ?? ''
 }
 
 function noteFor(leg: Leg) {

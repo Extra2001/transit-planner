@@ -1,14 +1,24 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
-  network,
+  createNetwork,
+  network as beijingNetwork,
   plan,
   type DayType,
+  type NetworkData,
   type PlanResult,
   type TransferOverride
 } from '@transit/core'
+import changchunData from '../data/changchun-network.json'
+import changchunStatus from '../data/changchun-status.json'
+
+type City = 'beijing' | 'changchun'
 
 const STORAGE_KEY = 'transit-planner.overrides.v1'
+const CITY_KEY = 'transit-planner.city.v1'
+
+const changchunNetwork = createNetwork(changchunData as unknown as NetworkData)
+const networks = { beijing: beijingNetwork, changchun: changchunNetwork }
 
 function defaultDay(): DayType {
   const d = new Date().getDay()
@@ -35,9 +45,29 @@ function loadOverrides(): TransferOverride[] {
   }
 }
 
+function defaultEndpoints(city: City): { from: string; to: string } {
+  if (city === 'beijing') return { from: '西直门', to: '东单' }
+  const names = changchunNetwork.stations
+  if (!names.length) return { from: '', to: '' }
+  const from = names.find((n) => n.includes('长春站')) ?? names[0]
+  const to = names.find((n) => n.includes('长影世纪城')) ?? names[names.length - 1]
+  return { from, to }
+}
+
 export const usePlannerStore = defineStore('planner', () => {
-  const from = ref('西直门')
-  const to = ref('东单')
+  const changchunReady = changchunStatus.status === 'ready'
+  let savedCity: City = 'beijing'
+  try {
+    const raw = localStorage.getItem(CITY_KEY)
+    if (raw === 'changchun' && changchunReady) savedCity = 'changchun'
+  } catch {
+    /* ignore */
+  }
+
+  const city = ref<City>(savedCity)
+  const initial = defaultEndpoints(savedCity)
+  const from = ref(initial.from)
+  const to = ref(initial.to)
   const time = ref('08:00')
   const day = ref<DayType>(defaultDay())
   const speed = ref(1)
@@ -49,14 +79,24 @@ export const usePlannerStore = defineStore('planner', () => {
   const computing = ref(false)
   const overrides = ref<TransferOverride[]>(loadOverrides())
 
-  const lines = network.lines
-  const counts = network.data.meta.counts
+  const activeNetwork = computed(() => networks[city.value])
+  const lines = computed(() => activeNetwork.value.lines)
+  const counts = computed(() => activeNetwork.value.data.meta.counts)
   const stations = computed(() =>
-    [...network.stations].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
+    [...activeNetwork.value.stations].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
   )
-  const reviewLines = computed(() => lines.filter((l) => l.status === 'review'))
-  const supportedLines = computed(() => lines.filter((l) => l.status === 'supported'))
-
+  const reviewLines = computed(() => lines.value.filter((l) => l.status === 'review'))
+  const supportedLines = computed(() => lines.value.filter((l) => l.status === 'supported'))
+  const cityLabel = computed(() => (city.value === 'beijing' ? '北京地铁' : '长春轨道交通'))
+  const cityOptions = computed(() =>
+    changchunReady
+      ? [
+          { id: 'beijing' as const, label: '北京' },
+          { id: 'changchun' as const, label: '长春' }
+        ]
+      : [{ id: 'beijing' as const, label: '北京' }]
+  )
+  const changchunSummary = computed(() => changchunStatus)
   const speedLabel = computed(() => {
     if (speed.value <= 0.9) return '偏慢'
     if (speed.value <= 0.98) return '略慢'
@@ -66,13 +106,31 @@ export const usePlannerStore = defineStore('planner', () => {
   })
 
   function linesAt(name: string) {
-    const idx = network.stationIndex.get(name)
+    const net = activeNetwork.value
+    const idx = net.stationIndex.get(name)
     if (idx === undefined) return []
-    return network.lineAt[idx].map((i) => network.lines[i])
+    return net.lineAt[idx].map((i) => net.lines[i])
   }
 
   function stationName(idx: number) {
-    return network.stations[idx]
+    return activeNetwork.value.stations[idx]
+  }
+
+  function setCity(next: City) {
+    if (next === 'changchun' && !changchunReady) return
+    if (next === city.value) return
+    city.value = next
+    try {
+      localStorage.setItem(CITY_KEY, next)
+    } catch {
+      /* ignore */
+    }
+    const d = defaultEndpoints(next)
+    from.value = d.from
+    to.value = d.to
+    result.value = null
+    error.value = ''
+    run()
   }
 
   function findOverride(station: string, fromLine: string, toLine: string) {
@@ -131,7 +189,7 @@ export const usePlannerStore = defineStore('planner', () => {
     computing.value = true
     error.value = ''
     try {
-      result.value = plan(network, {
+      result.value = plan(activeNetwork.value, {
         from: from.value,
         to: to.value,
         time: time.value,
@@ -151,6 +209,12 @@ export const usePlannerStore = defineStore('planner', () => {
   }
 
   return {
+    city,
+    cityLabel,
+    cityOptions,
+    changchunReady,
+    changchunSummary,
+    activeNetwork,
     from,
     to,
     time,
@@ -173,6 +237,7 @@ export const usePlannerStore = defineStore('planner', () => {
     findOverride,
     saveOverride,
     clearOverride,
+    setCity,
     swap,
     run
   }

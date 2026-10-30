@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { network } from '@transit/core'
 import { usePlannerStore } from '../stores/planner'
 import changchunStatus from '../data/changchun-status.json'
 
 const store = usePlannerStore()
+const net = computed(() => store.activeNetwork)
 
 const supported = computed(() => store.supportedLines.length)
 const review = computed(() => store.reviewLines.length)
@@ -13,6 +13,7 @@ const cc = changchunStatus as {
   counts: { lines: number; stations: number; trips: number }
   coverage: number
   coverageDetail?: { coveredStations: number; expectedStations: number; stationCoverage: number }
+  matchQuality?: { min: number; avg: number; groups: number }
   capturedAt: string
   note: string
 }
@@ -44,7 +45,7 @@ function modeLabel(mode: string): string {
       <span class="coverage-count">{{ supported }} 已支持 · {{ review }} 待核验</span>
     </summary>
     <p class="coverage-intro">
-      共 {{ store.lines.length }} 条线、{{ network.stations.length }} 站、{{ store.counts.trips }} 班。
+      共 {{ store.lines.length }} 条线、{{ net.stations.length }} 站、{{ store.counts.trips }} 班。
       “待核验”不等于不可用，而是存在站表缺口、越行/待避、环线端点或新旧站表差异；查询时仍会显式提示。
     </p>
     <div class="changchun-status">
@@ -55,11 +56,17 @@ function modeLabel(mode: string): string {
         </span>
       </div>
       <p>
-        {{ cc.counts.lines }} 线 · {{ cc.counts.trips }} 班样本 ·
-        站覆盖 {{ cc.coverageDetail?.coveredStations ?? cc.counts.stations }}/{{ cc.coverageDetail?.expectedStations ?? '?' }} 站
-        （{{ (cc.coverage * 100).toFixed(1) }}%）· 采集 {{ cc.capturedAt.slice(0, 10) }}
+        {{ cc.counts.lines }} 线 · {{ cc.counts.trips }} {{ cc.status === 'ready' ? '班' : '班样本' }} ·
+        站-线覆盖 {{ cc.coverageDetail?.coveredStations ?? cc.counts.stations }}/{{ cc.coverageDetail?.expectedStations ?? '?' }} 对
+        （{{ (cc.coverage * 100).toFixed(1) }}%）
+        <template v-if="cc.matchQuality">
+          · 匹配可信度 {{ (cc.matchQuality.avg * 100).toFixed(1) }}%（最低 {{ (cc.matchQuality.min * 100).toFixed(1) }}%）
+        </template>
+        · 采集 {{ cc.capturedAt.slice(0, 10) }}
       </p>
-      <p class="cc-note">{{ cc.note }}；长春数据不参与当前查询。</p>
+      <p class="cc-note">
+        {{ cc.status === 'ready' ? '已接入顶部城市切换，可查询。' : '长春数据不参与当前查询。' }}
+      </p>
     </div>
     <ul class="coverage-list">
       <li v-for="line in store.lines" :key="line.id" class="coverage-row">
@@ -72,7 +79,8 @@ function modeLabel(mode: string): string {
           <span class="mode-tag">{{ modeLabel(line.mode) }}</span>
           <span class="status-tag" :class="line.status">{{ statusLabel(line.status) }}</span>
           <span class="coverage-meta">
-            {{ line.stationCount }} 站 · {{ line.tripCount }} 班 · BST 标注 {{ line.dataDate ?? '日期未知' }}
+            {{ line.stationCount }} 站 · {{ line.tripCount }} 班 ·
+            {{ store.city === 'beijing' ? 'BST 标注' : '采集' }} {{ line.dataDate ?? '日期未知' }}
           </span>
         </div>
         <div class="coverage-source">
@@ -85,8 +93,8 @@ function modeLabel(mode: string): string {
       </li>
     </ul>
     <p class="coverage-foot">
-      本页班次来自汇总文件（最后提交 {{ network.data.meta.aggregateUpdatedAt }}）；
-      行内日期是 BST 线路文件标注的截止日，二者可能不同步。站表差异不会被自动补班，未停靠车站不会出现在该线路径中。
+      本页班次来自 {{ net.data.meta.title }}（生成/汇总 {{ net.data.meta.aggregateUpdatedAt }}）；
+      行内日期为数据源标注日期，二者可能不同步。站表差异不会被自动补班，未停靠车站不会出现在该线路径中。
     </p>
   </details>
 </template>

@@ -7,7 +7,7 @@
 ## 先看结论
 
 - **北京可以做**「计划时刻级」的逐班换乘优化：官方以图片发布车站逐班时刻表，已有开源项目完成 OCR 与结构化。
-- **长春协议已确认、覆盖不足**：E 出行 H5 table2 已实测；当前 1 号线 2 站/173 班样本，覆盖率约 13%，状态 partial，未开放查询。
+- **长春已全量导入**：8 条线、142 个唯一车站（168 个线路-车站对）、4,843 班；站-线覆盖 168/168，匹配可信度最低 90.6%/平均 97.3%，已开放查询。
 - **没有发现**公开、文档化、允许第三方直接调用的北京/长春实时列车 API。因此本原型不做实时。
 - 换乘步行时间来自爱好者整理/推算，**不是运营方实测**；UI 中标注为「估计」，并支持按步速缩放与安全余量。
 
@@ -30,12 +30,13 @@
 
 ## 长春
 
-已确认 E 出行 H5 的 table2 接口与字段：`startInterval` 是小时、`paramsList[].time` 是分钟。当前用少量样本验证了协议与跨站匹配，但**样本只覆盖 1 号线 2 站/173 班（约 13%），状态为 partial，未开放长春查询**；可用 `npm run changchun:status` 查看。
+已确认 E 出行 H5 的 table2 接口与字段：`startInterval` 是小时、`paramsList[].time` 是分钟。当前为 8 条线、142 个唯一车站（168 个线路-车站对）、4,843 班；状态 `ready`。可用 `npm run changchun:status` 查看。
 
 ```bash
 node tools/changchun-import/import-table2.mjs build   # 读取 data/changchun/raw，离线导入
 node tools/changchun-import/import-table2.mjs status
 node tools/changchun-import/import-table2.mjs rollback <version>
+node tools/changchun-import/fetch-all.mjs --confirm-bulk --delay 3000 --jitter 1000
 npm run test:changchun
 ```
 
@@ -97,6 +98,7 @@ research/               # 调研报告与原始数据快照
 - **代码**：MIT，见 [LICENSE](LICENSE)。
 - **时刻数据**：衍生自 [BoyInTheSun/beijing-subway-schedule](https://github.com/BoyInTheSun/beijing-subway-schedule)（CC BY-SA 4.0），其底层为北京地铁/京港地铁官网公布的车站逐班时刻表图片，经 OCR 与人工纠错。数据文件以 CC BY-SA 4.0 提供，见 [LICENSE-DATA](LICENSE-DATA)。
 - **换乘步行时间**：衍生自 [Mick235711/Beijing-Subway-Tools](https://github.com/Mick235711/Beijing-Subway-Tools) 的 `metadata.json5`（MIT），为爱好者整理/推算值。
+- **长春时刻**：来自用户授权/要求的 E 出行 H5 table2 低频采集；原始响应不随仓库分发，派生时刻表已接入 PWA；公开部署前仍需确认运营方使用条件。
 - 详见 [NOTICE.md](NOTICE.md)。
 
 ## 已知限制
@@ -108,5 +110,5 @@ research/               # 调研报告与原始数据快照
 - 6 号线待避列车发车时刻未知，按到站时刻保守处理；越行通过站已剔除，不允许上下车。
 - 2/10 号线环线在端点折返，闭环段依赖反方向列车；1 号线苹果园、17 号线望京西未在班次中停靠。
 - 查询时刻按「已到达站台」计，不含进站、安检、站厅步行。
-- 长春 table2 仅完成协议与 2 站样本验证（1 号线、173 班、覆盖率约 13%），状态 partial，不能做长春查询。
+- 长春数据为 8 条线/4,843 班，站-线覆盖 100%；但车次由跨站时刻匹配推断（最低可信度 90.6%），换乘时间按 180 秒默认估计，不适合把结果当作绝对精确的赶车依据。
 - 未实现票价、首末班单独提示、无障碍路径、逐站台/最佳车厢数据。

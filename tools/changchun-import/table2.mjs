@@ -228,10 +228,10 @@ export function parseTable2(text, meta = {}) {
     const compareFirst = first === null ? null : first < 240 ? first + 1440 : first
     const compareLast = last === null ? null : last < 240 ? last + 1440 : last
     if (compareFirst !== null && Math.abs(computedFirst - compareFirst) > 1) {
-      errors.push(`首班不一致：响应 ${data.firstDate}，按 list 计算 ${fmt(computedFirst)}`)
+      warnings.push(`首班字段与 list 不一致：响应 ${data.firstDate}，按 list 计算 ${fmt(computedFirst)}；以 list 为准`)
     }
     if (compareLast !== null && Math.abs(computedLast - compareLast) > 1) {
-      errors.push(`末班不一致：响应 ${data.lastDate}，按 list 计算 ${fmt(computedLast)}`)
+      warnings.push(`末班字段与 list 不一致：响应 ${data.lastDate}，按 list 计算 ${fmt(computedLast)}；以 list 为准`)
     }
   } else if (dayType) {
     errors.push(`weekday=${meta.weekday} 有日类型但 list 为空`)

@@ -4,7 +4,6 @@ import {
   formatClock,
   formatDuration,
   formatMargin,
-  network,
   type TransferAdvice
 } from '@transit/core'
 import { usePlannerStore } from '../stores/planner'
@@ -17,9 +16,10 @@ const store = usePlannerStore()
 const editing = ref(false)
 const draft = ref(0)
 
-const stationName = computed(() => network.stations[props.note.station])
-const fromLine = computed(() => network.lines[props.note.fromLine])
-const toLine = computed(() => network.lines[props.note.toLine])
+const net = computed(() => store.activeNetwork)
+const stationName = computed(() => net.value.stations[props.note.station])
+const fromLine = computed(() => net.value.lines[props.note.fromLine])
+const toLine = computed(() => net.value.lines[props.note.toLine])
 const override = computed(() =>
   store.findOverride(stationName.value, fromLine.value.id, toLine.value.id)
 )

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { network } from '@transit/core'
 import { usePlannerStore } from './stores/planner'
 import StationField from './components/StationField.vue'
 import PlanView from './components/PlanView.vue'
@@ -32,11 +31,21 @@ onMounted(() => store.run())
         <div class="brand-mark" aria-hidden="true">⇄</div>
         <div>
           <h1>逐班换乘</h1>
-          <p>北京地铁全网 · 计划时刻</p>
+          <p>{{ store.cityLabel }} · 计划时刻</p>
         </div>
       </div>
       <span class="pill">原型 · 非实时</span>
     </header>
+
+    <div v-if="store.cityOptions.length > 1" class="city-switch">
+      <button
+        v-for="option in store.cityOptions"
+        :key="option.id"
+        type="button"
+        :class="{ active: store.city === option.id }"
+        @click="store.setCity(option.id)"
+      >{{ option.label }}</button>
+    </div>
 
     <main>
       <section class="card form-card">
@@ -132,37 +141,50 @@ onMounted(() => store.run())
         <p>选择起终点后自动计算。</p>
       </section>
 
-      <p class="notice">
-        覆盖 {{ store.lines.length }} 条线、{{ network.stations.length }} 站（含 1 号线全线、6 号线越行、2/10 环线）。
+      <p v-if="store.city === 'beijing'" class="notice">
+        覆盖 {{ store.lines.length }} 条线、{{ store.activeNetwork.stations.length }} 站（含 1 号线全线、6 号线越行、2/10 环线）。
         时刻按已到站台计，不含进站安检、节假日专用图与临时调整。
+      </p>
+      <p v-else class="notice">
+        长春 {{ store.lines.length }} 条线、{{ store.activeNetwork.stations.length }} 站；计划时刻，采集
+        {{ store.changchunSummary.capturedAt.slice(0, 10) }}。换乘时间未录入，按 180 秒默认估计；
+        列车由跨站时刻匹配推断，不保证逐车绝对正确。
       </p>
       <CoveragePanel />
     </main>
 
     <footer class="app-footer">
       <p class="foot-strong">数据说明</p>
+      <template v-if="store.city === 'beijing'">
+        <p>
+          逐班计划时刻来自
+          <a href="https://github.com/BoyInTheSun/beijing-subway-schedule" target="_blank" rel="noreferrer">
+            BoyInTheSun/beijing-subway-schedule
+          </a>
+          （CC BY-SA 4.0），底层为北京地铁、京港地铁官网公布的车站时刻表图片，经 OCR 与人工纠错；
+          各线截止日期与完整性见上方数据覆盖面板。
+        </p>
+        <p>
+          换乘步行时间来自
+          <a href="https://github.com/Mick235711/Beijing-Subway-Tools" target="_blank" rel="noreferrer">
+            Beijing-Subway-Tools
+          </a>
+          （MIT），为爱好者整理/推算值，并非运营方实测，可按步速缩放。
+        </p>
+      </template>
+      <template v-else>
+        <p>
+          逐班计划时刻来自长春 E 出行 H5 的 table2 接口，低频串行采集于
+          {{ store.changchunSummary.capturedAt.slice(0, 10) }}；原始响应与导入快照仅本地保留。
+        </p>
+        <p>
+          时刻表没有列车 ID，运行轨迹由相邻站时刻匹配推断；换乘时间未录入，按 180 秒默认估计。
+          未确认数据再利用许可前，不公开再分发原始响应。
+        </p>
+      </template>
       <p>
-        逐班计划时刻来自
-        <a href="https://github.com/BoyInTheSun/beijing-subway-schedule" target="_blank" rel="noreferrer">
-          BoyInTheSun/beijing-subway-schedule
-        </a>
-        （CC BY-SA 4.0），底层为北京地铁、京港地铁官网公布的车站时刻表图片，经 OCR 与人工纠错；
-        各线截止日期与完整性见上方数据覆盖面板。
-      </p>
-      <p>
-        换乘步行时间来自
-        <a href="https://github.com/Mick235711/Beijing-Subway-Tools" target="_blank" rel="noreferrer">
-          Beijing-Subway-Tools
-        </a>
-        （MIT），为爱好者整理/推算值，并非运营方实测，可按步速缩放。
-      </p>
-      <p>
-        数据汇总最后更新 {{ network.data.meta.aggregateUpdatedAt }}。列车时刻可能因调图、临客、故障而变化；
+        数据汇总最后更新 {{ store.activeNetwork.data.meta.aggregateUpdatedAt }}。列车时刻可能因调图、临客、故障而变化；
         本原型不提供实时到站，请以现场运营为准。
-      </p>
-      <p>
-        长春：E 出行截图导入工具已就绪，当前未收到截图、0 条核验数据，未纳入本页查询；
-        未核验或不允许再分发的截图不会打包进 PWA。
       </p>
       <p class="foot-dim">可行性研究原型 · 不构成出行保证</p>
     </footer>
