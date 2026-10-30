@@ -279,120 +279,303 @@ export function parseTable2(text, meta = {}) {
   }
 }
 
+/**
+ * 相邻站运行时间搜索窗口上界。
+ *
+ * 实测（长春 8 线 640 条腿）相邻站时刻差主峰为 1–4 分钟；窗口取 5 分钟给取整留余量。
+ * 放得更宽会引入 8–9 分钟的错位对齐（与发车间隔同余），把大量本来可确定的配对变成多解。
+ */
+export const DEFAULT_MAX_RUN = 5
+
 /** 相邻站时刻匹配：最大基数、单调、区间运行时间约束。 */
-export function matchTimes(aTimes, bTimes, opts = {}) {
-  const minRun = opts.minRun ?? 1
-  const maxRun = opts.maxRun ?? 15
+function createSolver(aTimes, bTimes, minRun, maxRun) {
   const n = aTimes.length
   const m = bTimes.length
-  const dp = Array.from({ length: n + 1 }, () => new Int16Array(m + 1))
-  const ways = Array.from({ length: n + 1 }, () => new Uint8Array(m + 1))
-  ways[0][0] = 1
-  for (let j = 1; j <= m; j++) ways[0][j] = 1
-  for (let i = 1; i <= n; i++) ways[i][0] = 1
+  const W = m + 1
+  const dp = new Int16Array((n + 1) * W)
+  const ways = new Uint8Array((n + 1) * W)
 
-  for (let i = 1; i <= n; i++) {
-    for (let j = 1; j <= m; j++) {
-      const skipA = dp[i - 1][j]
-      const skipB = dp[i][j - 1]
+  return function solve(forbid) {
+    dp.fill(0)
+    ways.fill(0)
+    ways[0] = 1
+    for (let j = 1; j <= m; j++) ways[j] = 1
+    for (let i = 1; i <= n; i++) ways[i * W] = 1
+
+    for (let i = 1; i <= n; i++) {
+      const row = i * W
+      const prevRow = (i - 1) * W
+      const ai = aTimes[i - 1]
+      for (let j = 1; j <= m; j++) {
+        const skipA = dp[prevRow + j]
+        const skipB = dp[row + j - 1]
+        const d = bTimes[j - 1] - ai
+        const blocked = forbid !== null && forbid[0] === i - 1 && forbid[1] === j - 1
+        const can = !blocked && d >= minRun && d <= maxRun
+        const take = can ? dp[prevRow + j - 1] + 1 : -1
+        let best = skipA > skipB ? skipA : skipB
+        if (take > best) best = take
+        dp[row + j] = best
+        let w = 0
+        if (best === skipA) w += ways[prevRow + j]
+        if (best === skipB) w += ways[row + j - 1]
+        if (best === take && take >= 0) w += ways[prevRow + j - 1]
+        ways[row + j] = w > 2 ? 2 : w
+      }
+    }
+
+    const pairs = []
+    let i = n
+    let j = m
+    while (i > 0 && j > 0) {
       const d = bTimes[j - 1] - aTimes[i - 1]
-      const can = d >= minRun && d <= maxRun
-      const match = can ? dp[i - 1][j - 1] + 1 : -1
-      const best = Math.max(skipA, skipB, match)
-      dp[i][j] = best
-      let w = 0
-      if (best === skipA) w += ways[i - 1][j]
-      if (best === skipB) w += ways[i][j - 1]
-      if (best === match && match >= 0) w += ways[i - 1][j - 1]
-      ways[i][j] = Math.min(2, w)
+      const blocked = forbid !== null && forbid[0] === i - 1 && forbid[1] === j - 1
+      const can = !blocked && d >= minRun && d <= maxRun
+      if (can && dp[i * W + j] === dp[(i - 1) * W + j - 1] + 1) {
+        pairs.push([i - 1, j - 1, d])
+        i--
+        j--
+      } else if (dp[i * W + j] === dp[(i - 1) * W + j]) {
+        i--
+      } else {
+        j--
+      }
     }
-  }
-
-  const pairs = []
-  let i = n
-  let j = m
-  while (i > 0 && j > 0) {
-    const d = bTimes[j - 1] - aTimes[i - 1]
-    const can = d >= minRun && d <= maxRun
-    if (can && dp[i][j] === dp[i - 1][j - 1] + 1) {
-      pairs.push([i - 1, j - 1, d])
-      i--
-      j--
-    } else if (dp[i][j] === dp[i - 1][j]) {
-      i--
-    } else {
-      j--
-    }
-  }
-  pairs.reverse()
-  const matchedA = new Set(pairs.map((p) => p[0]))
-  const matchedB = new Set(pairs.map((p) => p[1]))
-  return {
-    pairs,
-    unmatchedA: [...Array(n).keys()].filter((x) => !matchedA.has(x)),
-    unmatchedB: [...Array(m).keys()].filter((x) => !matchedB.has(x)),
-    matched: pairs.length,
-    ambiguity: ways[n][m] > 1,
-    confidence: pairs.length / Math.max(n, m, 1)
+    pairs.reverse()
+    return { pairs, optimal: dp[n * W + m], ways: ways[n * W + m] }
   }
 }
 
-/** 把多站时刻链成车次；不唯一/不完整时保留歧义标记。 */
-export function buildTrips(stations, opts = {}) {
-  if (!stations.length) return { trips: [], confidence: 0, errors: ['没有车站时刻'] }
+/**
+ * 相邻站时刻匹配：最大基数、单调、区间运行时间约束。
+ *
+ * `certain` 只保留“出现在每一个最大基数匹配里”的配对：
+ * 把该配对禁用后最大基数会下降，才认为关联被数据唯一确定。
+ * 其余配对不写入车次，因此不会出现“随便挑一个合理配对”的情况；
+ * 未确认的配对只截断车次，不整段删除，两侧已确认区段仍可用。
+ */
+export function matchTimes(aTimes, bTimes, opts = {}) {
   const minRun = opts.minRun ?? 1
-  const maxRun = opts.maxRun ?? 15
-  let trains = stations[0].times.map((t, i) => ({
-    id: `T${i + 1}`,
-    stops: [{ station: 0, minute: t }]
-  }))
-  let matchedTotal = 0
-  let ambiguityPairs = 0
-  let possibleTotal = stations[0].times.length
+  const maxRun = opts.maxRun ?? DEFAULT_MAX_RUN
+  const n = aTimes.length
+  const m = bTimes.length
+  if (!n || !m) {
+    return {
+      pairs: [],
+      certain: [],
+      uncertainPairs: 0,
+      unmatchedA: [...Array(n).keys()],
+      unmatchedB: [...Array(m).keys()],
+      matched: 0,
+      optimal: 0,
+      ambiguity: false,
+      unique: true,
+      coverage: 0,
+      pathCountCapped: 0
+    }
+  }
+  const solve = createSolver(aTimes, bTimes, minRun, maxRun)
+  const base = solve(null)
+  // 路径计数会把“先跳 A 再跳 B”和“先跳 B 再跳 A”算成两条，只能当快速筛子，
+  // 不能当唯一性证明；唯一性以逐对确定性为准。
+  const ambiguousByCount = base.optimal > 0 && base.ways > 1
+  let certain = base.pairs
+  let unique = !ambiguousByCount
+  if (ambiguousByCount) {
+    if (opts.certainty === false) {
+      // 没有要求做确定性判定时，一律不返回配对，避免把多解当成已确认。
+      certain = []
+      unique = false
+    } else {
+      certain = base.pairs.filter((p) => solve([p[0], p[1]]).optimal < base.optimal)
+      unique = certain.length === base.pairs.length && base.pairs.length === base.optimal
+    }
+  }
+  const certainA = new Set(certain.map((p) => p[0]))
+  const certainB = new Set(certain.map((p) => p[1]))
+  return {
+    pairs: base.pairs,
+    certain,
+    uncertainPairs: base.pairs.length - certain.length,
+    unmatchedA: [...Array(n).keys()].filter((x) => !certainA.has(x)),
+    unmatchedB: [...Array(m).keys()].filter((x) => !certainB.has(x)),
+    matched: certain.length,
+    optimal: base.optimal,
+    ambiguity: !unique,
+    unique,
+    /** 已确认配对 / 该腿两侧较大班次数，是数量口径，不是“关联正确概率” */
+    coverage: certain.length / Math.max(n, m, 1),
+    pathCountCapped: base.ways
+  }
+}
+
+/**
+ * 把多站时刻链成车次。
+ *
+ * 规则：
+ * - 只有相邻站匹配唯一（ways=1）时才连接；
+ * - 匹配不唯一的腿直接断开，不把任一边的 pair 写入正式车次；
+ * - 中间终到的车次进入 completed，不丢弃；
+ * - 中间始发的车次新建 active，继续向后续站延伸；
+ * - 最终 trips 只保留至少 2 站的已确认区段。
+ *
+ * 每个区段带 startReason/endReason，用于区分“真实中途始发/终到”与“因歧义断开”：
+ * origin | terminus | unmatched | ambiguity | empty。
+ */
+export function buildTrips(stations, opts = {}) {
+  if (!stations.length) {
+    return {
+      trips: [],
+      allTrips: [],
+      coverage: 0,
+      ambiguityRate: 0,
+      ambiguousLegs: 0,
+      uniqueLegs: 0,
+      matchedPairs: 0,
+      possiblePairs: 0,
+      uncertainPairs: 0,
+      verification: 'insufficient',
+      terminatedAtIntermediate: 0,
+      splitByAmbiguity: 0,
+      startedAtIntermediate: 0,
+      restartedAfterAmbiguity: 0,
+      singletonCount: 0,
+      fullLengthTrips: 0,
+      legReports: [],
+      errors: ['没有车站时刻'],
+      stationCount: 0,
+      legCount: 0,
+      trainCount: 0
+    }
+  }
+  const minRun = opts.minRun ?? 1
+  const maxRun = opts.maxRun ?? DEFAULT_MAX_RUN
+  let nextId = 1
+  const newTrip = (station, minute, startReason) => ({
+    id: `T${nextId++}`,
+    stops: [{ station, minute }],
+    startReason
+  })
+  const endTrip = (trip, reason) => {
+    trip.endReason = reason
+    return trip
+  }
+
+  let active = stations[0].times.map((t) => newTrip(0, t, 'origin'))
+  const completed = []
+  let matchedPairs = 0
+  let possiblePairs = 0
+  let ambiguousLegs = 0
+  let uniqueLegs = 0
+  let uncertainPairs = 0
   const legReports = []
 
   for (let si = 1; si < stations.length; si++) {
-    const prevTimes = trains.map((t) => t.stops[t.stops.length - 1].minute)
+    const prevTimes = active.map((t) => t.stops[t.stops.length - 1].minute)
     const nextTimes = stations[si].times
-    const m = matchTimes(prevTimes, nextTimes, { minRun, maxRun })
-    matchedTotal += m.matched
-    possibleTotal = Math.max(possibleTotal, nextTimes.length)
-    if (m.ambiguity) ambiguityPairs++
+    const possible = Math.max(prevTimes.length, nextTimes.length)
+    possiblePairs += possible
+
+    if (!prevTimes.length || !nextTimes.length) {
+      // 任一侧没有时刻就不做关联，避免把“无数据”当成“已确认”。
+      ambiguousLegs++
+      legReports.push({
+        from: stations[si - 1].name,
+        to: stations[si].name,
+        prev: prevTimes.length,
+        next: nextTimes.length,
+        unique: false,
+        optimal: 0,
+        pathCountCapped: 0,
+        matched: 0,
+        uncertainPairs: 0,
+        unmatchedPrev: prevTimes.length,
+        unmatchedNext: nextTimes.length,
+        ambiguity: true,
+        coverage: 0,
+        reason: 'empty'
+      })
+      completed.push(...active.map((t) => endTrip(t, 'empty')))
+      active = nextTimes.map((t) => newTrip(si, t, 'empty'))
+      continue
+    }
+
+    const m = matchTimes(prevTimes, nextTimes, { minRun, maxRun, certainty: true })
+    const legAmbiguous = !m.unique
+    if (legAmbiguous) ambiguousLegs++
+    else uniqueLegs++
+    matchedPairs += m.matched
+    uncertainPairs += m.uncertainPairs
     legReports.push({
       from: stations[si - 1].name,
       to: stations[si].name,
-      matched: m.matched,
       prev: prevTimes.length,
       next: nextTimes.length,
+      unique: m.unique,
+      optimal: m.optimal,
+      pathCountCapped: m.pathCountCapped,
+      matched: m.matched,
+      uncertainPairs: m.uncertainPairs,
       unmatchedPrev: m.unmatchedA.length,
       unmatchedNext: m.unmatchedB.length,
-      ambiguity: m.ambiguity,
-      confidence: m.confidence
+      ambiguity: legAmbiguous,
+      coverage: m.matched / Math.max(possible, 1)
     })
+
+    const reason = legAmbiguous ? 'ambiguity' : 'unmatched'
     const usedNext = new Set()
-    const nextTrains = []
-    for (const [pi, ni] of m.pairs) {
-      trains[pi].stops.push({ station: si, minute: nextTimes[ni] })
+    const nextActive = []
+    for (const [pi, ni] of m.certain) {
+      active[pi].stops.push({ station: si, minute: nextTimes[ni] })
       usedNext.add(ni)
-      nextTrains.push(trains[pi])
+      nextActive.push(active[pi])
     }
+    for (const pi of m.unmatchedA) completed.push(endTrip(active[pi], reason))
     for (let ni = 0; ni < nextTimes.length; ni++) {
       if (usedNext.has(ni)) continue
-      nextTrains.push({ id: `T${si}-${ni + 1}`, stops: [{ station: si, minute: nextTimes[ni] }] })
+      nextActive.push(newTrip(si, nextTimes[ni], reason))
     }
-    nextTrains.sort((a, b) => a.stops[a.stops.length - 1].minute - b.stops[b.stops.length - 1].minute)
-    trains = nextTrains
+    nextActive.sort(
+      (a, b) => a.stops[a.stops.length - 1].minute - b.stops[b.stops.length - 1].minute
+    )
+    active = nextActive
   }
 
-  const confidence = possibleTotal ? matchedTotal / Math.max(possibleTotal * (stations.length - 1), 1) : 0
+  const allTrips = [...completed, ...active.map((t) => endTrip(t, 'terminus'))]
+  const trips = allTrips.filter((t) => t.stops.length >= 2)
+  const legs = stations.length - 1
+  const ambiguityRate = legs ? ambiguousLegs / legs : 0
+  const coverage = possiblePairs ? matchedPairs / possiblePairs : 0
+  const verification =
+    legs === 0 ? 'insufficient' : ambiguousLegs === 0 ? 'unique' : 'partial'
+  const longEnough = (t) => t.stops.length >= 2
   return {
-    trips: trains,
-    confidence,
-    ambiguityPairs,
+    trips,
+    allTrips,
+    coverage,
+    ambiguityRate,
+    ambiguousLegs,
+    uniqueLegs,
+    matchedPairs,
+    possiblePairs,
+    uncertainPairs,
+    verification,
+    /** 唯一匹配腿上没有对上、但在本区间已确认的区段（真实中途终到） */
+    terminatedAtIntermediate: completed.filter((t) => longEnough(t) && t.endReason === 'unmatched').length,
+    /** 因相邻站关联不确定而被迫截断的已确认区段 */
+    splitByAmbiguity: completed.filter((t) => longEnough(t) && t.endReason === 'ambiguity').length,
+    /** 唯一匹配腿上新出现的、无前置关联的车次（真实中途始发） */
+    startedAtIntermediate: allTrips.filter((t) => t.startReason === 'unmatched').length,
+    /** 关联不确定的腿之后重新开始的车次 */
+    restartedAfterAmbiguity: allTrips.filter((t) => t.startReason === 'ambiguity').length,
+    singletonCount: allTrips.filter((t) => !longEnough(t)).length,
+    /** 走完整条导入站序的车次（被不确定关联截断的不计入） */
+    fullLengthTrips: trips.filter((t) => t.stops.length === stations.length).length,
     legReports,
     errors: [],
     stationCount: stations.length,
-    trainCount: trains.length
+    legCount: legs,
+    trainCount: trips.length
   }
 }
 

@@ -146,9 +146,9 @@ onMounted(() => store.run())
         时刻按已到站台计，不含进站安检、节假日专用图与临时调整。
       </p>
       <p v-else class="notice">
-        长春 {{ store.lines.length }} 条线、{{ store.activeNetwork.stations.length }} 站；计划时刻，采集
+        长春 {{ store.lines.length }} 条线、{{ store.activeNetwork.stations.length }} 站、{{ store.counts.trips }} 条已确认区段；计划时刻，采集
         {{ store.changchunSummary.capturedAt.slice(0, 10) }}。换乘时间未录入，按 180 秒默认估计；
-        列车由跨站时刻匹配推断，不保证逐车绝对正确。
+        车次由相邻站时刻唯一匹配推断，关联不唯一的区段已断开、未写入车次，班次可能少于实际开行。
       </p>
       <CoveragePanel />
     </main>
@@ -178,7 +178,8 @@ onMounted(() => store.run())
           {{ store.changchunSummary.capturedAt.slice(0, 10) }}；原始响应与导入快照仅本地保留。
         </p>
         <p>
-          时刻表没有列车 ID，运行轨迹由相邻站时刻匹配推断；换乘时间未录入，按 180 秒默认估计。
+          时刻表没有列车 ID，运行轨迹由相邻站时刻唯一匹配推断；关联不唯一的区段不上车，因此结果偏保守。
+          换乘时间未录入，按 180 秒默认估计。
           未确认数据再利用许可前，不公开再分发原始响应。
         </p>
       </template>

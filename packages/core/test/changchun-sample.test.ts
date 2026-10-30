@@ -41,10 +41,11 @@ if (!file) {
 
   describe('长春 table2 全量网络复用北京核心', () => {
 
-  it('8 条线、142 个唯一车站、4,845 班', () => {
+  it('8 条线、142 个唯一车站、4,900+ 条已确认区段', () => {
     expect(net.lines).toHaveLength(8)
     expect(net.stations.length).toBe(142)
     expect(net.tripsById.length).toBeGreaterThan(4800)
+    expect(net.tripsById.length).toBeLessThan(5200)
     expect(net.interchange.size).toBeGreaterThan(20)
   })
 

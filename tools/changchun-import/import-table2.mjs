@@ -11,7 +11,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
-import { parseLinesPayload, parseTable2, buildTrips, WEEKDAY_EVIDENCE } from './table2.mjs'
+import { parseLinesPayload, parseTable2, buildTrips, WEEKDAY_EVIDENCE, DEFAULT_MAX_RUN } from './table2.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url)) + '/../..'
 const rawDir = path.join(root, 'data/changchun/raw')
@@ -135,8 +135,7 @@ function buildNetwork(lines, groups, meta) {
         stationGaps: [],
         extraStations: [],
         missingAdjacency: [],
-        notes: [],
-        _lowQuality: false
+        notes: []
       })
     }
     const line = lineOut[li]
@@ -159,16 +158,25 @@ function buildNetwork(lines, groups, meta) {
     for (const s of group.missingStations) if (!line.stationGaps.includes(s)) line.stationGaps.push(s)
     for (const g of group.gaps) if (!line.missingAdjacency.includes(g)) line.missingAdjacency.push(g)
     for (const n of group.notes) if (!line.notes.includes(n)) line.notes.push(n)
-    if (group.coverage < 0.95 || group.quality < 0.9) line._lowQuality = true
+    line._ambiguousLegs = (line._ambiguousLegs ?? 0) + (group.ambiguousLegs ?? 0)
+    line._legCount = (line._legCount ?? 0) + (group.legCount ?? 0)
+    if (group.coverage < 1) line._incomplete = true
   }
   for (const line of lineOut) {
     const set = new Set()
     for (const t of tripRows) if (t[1] === lineOut.indexOf(line)) for (let i = 0; i < t[3].length; i += 2) set.add(stations[t[3][i]])
     line.stationCount = set.size
+    if (line._ambiguousLegs > 0) {
+      line.notes.push(
+        `相邻站关联不唯一 ${line._ambiguousLegs}/${line._legCount} 段（${((line._ambiguousLegs / line._legCount) * 100).toFixed(1)}%），这些区段未写入车次`
+      )
+    }
     line.status =
-      line._lowQuality || line.missingAdjacency.length || line.stationGaps.length ? 'review' : 'supported'
+      line._incomplete || line.missingAdjacency.length || line.stationGaps.length ? 'review' : 'supported'
     line.confidence = line.status === 'review' || line.notes.length ? 'medium' : 'high'
-    delete line._lowQuality
+    delete line._incomplete
+    delete line._ambiguousLegs
+    delete line._legCount
   }
   const lineAt = stations.map(() => new Set())
   for (const t of tripRows) for (let i = 0; i < t[3].length; i += 2) lineAt[t[3][i]].add(t[1])
@@ -190,13 +198,14 @@ function buildNetwork(lines, groups, meta) {
       }
     }
   }
+  const ambLegs = lineOut.reduce((n, l) => n + (l.notes.some((x) => x.includes('关联不唯一')) ? 1 : 0), 0)
   return {
     meta: {
       schemaVersion: 2,
       title: '长春轨道交通逐班计划时刻',
       generatedAt: meta.generatedAt,
       aggregateUpdatedAt: meta.capturedAt?.slice(0, 10) ?? meta.generatedAt.slice(0, 10),
-      aggregateUpdatedNote: '由长春 E 出行 H5 table2 响应离线导入；列车由跨站时刻匹配推断。',
+      aggregateUpdatedNote: '由长春 E 出行 H5 table2 响应离线导入；列车由相邻站时刻唯一匹配推断。',
       counts: {
         lines: lineOut.length,
         stations: stations.length,
@@ -207,10 +216,15 @@ function buildNetwork(lines, groups, meta) {
       warnings: [
         '长春数据来自 E 出行 H5；原始响应使用许可未确认，不随 PWA 分发。',
         'weekday=1/2 解释为工作日/双休日为实测推断，非官方枚举说明。',
-        'table2 无列车 ID，跨站车次为时刻匹配推断；匹配不唯一处不用于精确赶车。',
+        'table2 无列车 ID，车次由相邻站时刻唯一匹配推断；关联不唯一的区段已断开、未写入车次，因此部分班次缺失。',
+        '车次条数是“已确认区段”，被截断的车次会拆成多段，不等于实际开行班次。',
         '换乘时间未录入，按 180 秒默认估计。',
         '时刻为计划时刻，不含实时延误、临客与临时调整。'
-      ]
+      ].concat(
+        ambLegs > 0
+          ? [`有 ${ambLegs} 条线的部分区段存在多解关联，已在 线路说明 中标注。`]
+          : []
+      )
     },
     lines: lineOut,
     stations,
@@ -221,9 +235,10 @@ function buildNetwork(lines, groups, meta) {
 
 function cmdBuild(flags) {
   const minRun = Number(flags['min-run'] ?? 1)
-  const maxRun = Number(flags['max-run'] ?? 15)
+  const maxRun = Number(flags['max-run'] ?? DEFAULT_MAX_RUN)
   const minCoverage = Number(flags['min-coverage'] ?? 0.95)
-  const minQuality = Number(flags['min-quality'] ?? 0.9)
+  const minAssoc = Number(flags['min-assoc'] ?? 0.9)
+  const maxAmbiguity = Number(flags['max-ambiguity'] ?? 0.1)
   const linesPath = findLinesFile()
   const linesPayload = parseLinesPayload(fs.readFileSync(linesPath, 'utf8'))
   const lineByCode = new Map(linesPayload.lines.map((l) => [l.lineCode, l]))
@@ -361,21 +376,14 @@ function cmdBuild(flags) {
       name: s.name,
       times: byStand.get(s.standCode).result.times.map((t) => t.minute)
     }))
-    let match = null
-    if (gaps.length) {
-      // 缺口两侧不跨站匹配；整组只保留逐站时刻，不生成车次
-      match = null
-    } else if (stations.length >= 2) {
-      match = buildTrips(stations, { minRun, maxRun })
-    }
-    const quality = match
-      ? Math.max(0, Math.min(1, match.confidence * (1 - Math.min(0.05, match.ambiguityPairs * 0.01))))
-      : 0
+    // 站序有缺口时两侧连站序都不连续，跨缺口配对必然错，因此整组不生成车次。
+    const match = gaps.length || stations.length < 2 ? null : buildTrips(stations, { minRun, maxRun })
+    const verification = match ? match.verification : 'insufficient'
     const notes = []
     if (coverage < 1) notes.push(`覆盖 ${stationOrder.length}/${g.line.stands.length} 站（${(coverage * 100).toFixed(1)}%），不是完整线路`)
     if (gaps.length) notes.push(`站序缺口：${gaps.join('、')}；缺口两侧不做跨站匹配`)
-    if (match?.ambiguityPairs) notes.push(`有 ${match.ambiguityPairs} 个相邻站匹配不唯一，保留歧义（按 1% 置信度折扣计）`)
-    if (match && match.confidence < 0.95) notes.push(`车次匹配置信度 ${(match.confidence * 100).toFixed(1)}%，不用于精确赶车`)
+    if (match?.terminatedAtIntermediate) notes.push(`中途站终到车次 ${match.terminatedAtIntermediate} 个，已保留其区段`)
+    if (match?.startedAtIntermediate) notes.push(`中途站始发车次 ${match.startedAtIntermediate} 个`)
     const group = {
       line: g.line,
       direction: g.direction,
@@ -393,7 +401,11 @@ function cmdBuild(flags) {
       missingStations,
       gaps,
       coverage,
-      quality,
+      verification,
+      legCount: match?.legCount ?? 0,
+      ambiguousLegs: match?.ambiguousLegs ?? 0,
+      ambiguityRate: match ? match.ambiguityRate : 1,
+      associationCoverage: match ? match.coverage : 0,
       trips: match?.trips ?? [],
       match,
       notes
@@ -410,15 +422,24 @@ function cmdBuild(flags) {
       stations: stationOrder.map((s) => ({ code: s.standCode, name: s.name, trains: byStand.get(s.standCode).result.stats.trains })),
       missingStations,
       gaps,
+      verification,
       match: match
         ? {
             trains: match.trainCount,
-            confidence: match.confidence,
-            ambiguityPairs: match.ambiguityPairs,
+            verification: match.verification,
+            coverage: match.coverage,
+            ambiguityRate: match.ambiguityRate,
+            ambiguousLegs: match.ambiguousLegs,
+            legCount: match.legCount,
+            matchedPairs: match.matchedPairs,
+            possiblePairs: match.possiblePairs,
+            terminatedAtIntermediate: match.terminatedAtIntermediate,
+            splitByAmbiguity: match.splitByAmbiguity,
+            uncertainPairs: match.uncertainPairs,
+            startedAtIntermediate: match.startedAtIntermediate,
             legs: match.legReports
           }
         : null,
-      quality,
       notes
     })
   }
@@ -447,14 +468,19 @@ function cmdBuild(flags) {
     )
   }
 
+  const generatedAt = new Date().toISOString()
+  const capturedAt = captureManifest?.capturedAt
+  if (!capturedAt || Number.isNaN(Date.parse(capturedAt))) {
+    throw new Error('capture-manifest.json 缺少有效的 capturedAt，无法标注真实采集时间')
+  }
+  if (captureMismatches.length) {
+    throw new Error(`原始响应哈希与 capture-manifest 不一致：${captureMismatches.join('、')}`)
+  }
   const network = buildNetwork(linesPayload.lines, groups.filter((g) => g.trips.length), {
-    generatedAt: new Date().toISOString(),
-    capturedAt: '2026-10-30T06:09:00Z'
+    generatedAt,
+    capturedAt
   })
   fs.writeFileSync(path.join(versionDir, 'network.partial.json'), JSON.stringify(network))
-  const ready = groups.length > 0 && groups.every((g) => g.coverage >= minCoverage && g.quality >= minQuality && g.trips.length > 0)
-  if (ready) fs.writeFileSync(path.join(versionDir, 'network.json'), JSON.stringify(network))
-  fs.writeFileSync(path.join(versionDir, 'match-report.json'), JSON.stringify(report, null, 2))
 
   const rawHashes = files.map((f) => ({ file: f.file, sha256: sha256(path.join(rawDir, f.file)) }))
   const lineCodes = [...new Set(groups.map((g) => g.line.lineCode))]
@@ -464,48 +490,89 @@ function cmdBuild(flags) {
   )
   const coveredStations = coveredPairs.size
   const stationCoverage = expectedStations ? coveredStations / expectedStations : 0
-  const groupMaxCoverage = groups.length ? Math.max(...groups.map((g) => g.coverage)) : 0
-  const qualityValues = groups.filter((g) => g.trips.length).map((g) => g.quality)
-  const matchQuality = {
-    min: qualityValues.length ? Math.min(...qualityValues) : 0,
-    avg: qualityValues.length ? qualityValues.reduce((a, b) => a + b, 0) / qualityValues.length : 0,
-    groups: qualityValues.length
-  }
-  if (captureMismatches.length) {
-    throw new Error(`原始响应哈希与 capture-manifest 不一致：${captureMismatches.join('、')}`)
-  }
+
+  // 三个口径分开：站-线覆盖（有没有数据）、关联覆盖（对上多少）、歧义率（多少腿对不上唯一）。
+  const legCount = groups.reduce((n, g) => n + g.legCount, 0)
+  const ambiguousLegs = groups.reduce((n, g) => n + g.ambiguousLegs, 0)
+  const matchedPairs = groups.reduce((n, g) => n + (g.match?.matchedPairs ?? 0), 0)
+  const possiblePairs = groups.reduce((n, g) => n + (g.match?.possiblePairs ?? 0), 0)
+  const associationCoverage = possiblePairs ? matchedPairs / possiblePairs : 0
+  const ambiguityRate = legCount ? ambiguousLegs / legCount : 1
+  const verificationCounts = { unique: 0, partial: 0, insufficient: 0 }
+  for (const g of groups) verificationCounts[g.verification] += 1
+  const uncertainPairs = groups.reduce((n, g) => n + (g.match?.uncertainPairs ?? 0), 0)
+  const splitByAmbiguity = groups.reduce((n, g) => n + (g.match?.splitByAmbiguity ?? 0), 0)
+  const startedAtIntermediate = groups.reduce((n, g) => n + (g.match?.startedAtIntermediate ?? 0), 0)
+  const terminatedAtIntermediate = groups.reduce((n, g) => n + (g.match?.terminatedAtIntermediate ?? 0), 0)
+  const fullLengthTrips = groups.reduce((n, g) => n + (g.match?.fullLengthTrips ?? 0), 0)
+
+  // 门槛只看“是否值得开放查询”，不用任何“概率”措辞。
+  // 歧义腿不进入正式车次，因此可开放但必须显式披露被排除的比例。
+  const ready =
+    groups.length > 0 &&
+    stationCoverage >= minCoverage &&
+    associationCoverage >= minAssoc &&
+    ambiguityRate <= maxAmbiguity &&
+    groups.every((g) => g.trips.length > 0 && g.coverage >= minCoverage && g.verification !== 'insufficient' && g.gaps.length === 0)
+  if (ready) fs.writeFileSync(path.join(versionDir, 'network.json'), JSON.stringify(network))
+  fs.writeFileSync(path.join(versionDir, 'match-report.json'), JSON.stringify(report, null, 2))
+
   const metadata = {
     version,
-    generatedAt: new Date().toISOString(),
-    capturedAt: '2026-10-30T06:09:00Z',
+    generatedAt,
+    capturedAt,
     status: ready ? 'ready' : 'partial',
     counts: {
       lines: new Set(groups.map((g) => g.line.lineCode)).size,
       stations: new Set(groups.flatMap((g) => g.stationOrder.map((s) => s.standCode))).size,
       trips: network.trips.length,
-      groups: groups.length
+      fullLengthTrips,
+      groups: groups.length,
+      countsNote:
+        'trips 是“已确认区段”条数：被关联不唯一的腿截断的车次会拆成多段，因此不等于实际开行班次；fullLengthTrips 是走完整条导入站序的区段数。'
     },
     coverageDetail: {
       coveredStations,
       expectedStations,
       stationCoverage,
-      groupMaxCoverage,
-      definition: '站-线覆盖率 = 已导入的线路-车站对 / 全部线路-车站对；不是班次覆盖率，也不是匹配成功率。'
+      definition: '站-线覆盖率 = 已导入的线路-车站对 / 全部线路-车站对；只说明有没有数据，不代表关联正确性。'
     },
-    matchQuality,
+    association: {
+      legCount,
+      ambiguousLegs,
+      uniqueLegs: legCount - ambiguousLegs,
+      matchedPairs,
+      possiblePairs,
+      uncertainPairs,
+      associationCoverage,
+      ambiguityRate,
+      splitByAmbiguity,
+      terminatedAtIntermediate,
+      startedAtIntermediate,
+      verificationCounts,
+      definition:
+        '关联覆盖率 = 唯一匹配上的相邻站对数 / 该腿两侧较大班次数；歧义率 = 关联不唯一的腿数 / 腿数。两者都是数量口径，不是“配对正确的概率”。歧义腿不进入正式车次。'
+    },
+    gate: { stationCoverage: minCoverage, associationCoverage: minAssoc, maxAmbiguity, passed: ready },
     groups: groups.map((g) => ({
       lineCode: g.line.lineCode,
       line: g.line.name,
       direction: g.direction,
       dayType: g.dayType,
       coverage: g.coverage,
-      quality: g.quality,
-      trips: g.trips.length
+      verification: g.verification,
+      legCount: g.legCount,
+      ambiguousLegs: g.ambiguousLegs,
+      ambiguityRate: g.ambiguityRate,
+      associationCoverage: g.associationCoverage,
+      trips: g.trips.length,
+      fullLengthTrips: g.match?.fullLengthTrips ?? 0
     })),
     rawHashes,
     notes: [
       '未确认长春 E 出行数据再分发许可；raw/imported 仅本地开发。',
-      '仅少量样本；覆盖不足时 status=partial，不进入正式查询。',
+      'table2 无列车 ID，跨站车次由相邻站时刻唯一匹配推断；关联不唯一的腿已断开，不写入正式车次。',
+      '因此班次是“已确认区段”，可能少于实际开行班次；缺口不会被补造。',
       'weekday=1/2 的日类型解释为实测推断。'
     ]
   }
@@ -513,29 +580,13 @@ function cmdBuild(flags) {
   fs.mkdirSync(importedDir, { recursive: true })
   fs.writeFileSync(path.join(importedDir, 'current.json'), JSON.stringify(metadata, null, 2))
   writeAppNetwork(metadata, versionDir)
-  // 给 PWA 的精简状态（不含时刻、不可用于路径）
-  const statusFile = path.join(root, 'apps/web/src/data/changchun-status.json')
-  fs.mkdirSync(path.dirname(statusFile), { recursive: true })
-  fs.writeFileSync(
-    statusFile,
-    JSON.stringify(
-      {
-        status: metadata.status,
-        version,
-        capturedAt: metadata.capturedAt,
-        counts: metadata.counts,
-        coverage: metadata.coverageDetail?.stationCoverage ?? 0,
-        coverageDetail: metadata.coverageDetail,
-        matchQuality: metadata.matchQuality,
-        note: metadata.status === 'ready' ? '已具备构建时导入条件' : '样本不足，未开放查询'
-      },
-      null,
-      2
-    )
-  )
+  writeStatusFile(metadata)
   console.log(JSON.stringify(metadata, null, 2))
   console.log(`\n版本目录：${path.relative(root, versionDir)}`)
-  if (!ready) console.log('状态 partial：覆盖/匹配可信度不足，未生成正式 network.json，不进入 PWA 查询。')
+  console.log(
+    `站-线覆盖 ${(stationCoverage * 100).toFixed(1)}% · 关联覆盖 ${(associationCoverage * 100).toFixed(1)}% · 歧义腿 ${ambiguousLegs}/${legCount}（${(ambiguityRate * 100).toFixed(1)}%）· 车次 ${network.trips.length}`
+  )
+  if (!ready) console.log('状态 partial：覆盖或关联质量未达门槛，未生成正式 network.json，不进入 PWA 查询。')
 }
 
 function cmdStatus() {
@@ -582,6 +633,13 @@ function writeAppNetwork(metadata, versionDir) {
 function writeStatusFile(metadata) {
   const statusFile = path.join(root, 'apps/web/src/data/changchun-status.json')
   fs.mkdirSync(path.dirname(statusFile), { recursive: true })
+  const association = metadata.association
+  const note =
+    metadata.status === 'ready'
+      ? association && association.ambiguousLegs > 0
+        ? `已开放查询；${association.ambiguousLegs}/${association.legCount} 段相邻站关联不唯一，这些区段未写入车次`
+        : '已开放查询；全部相邻站关联唯一'
+      : '未达就绪门槛，不参与查询'
   fs.writeFileSync(
     statusFile,
     JSON.stringify(
@@ -592,8 +650,9 @@ function writeStatusFile(metadata) {
         counts: metadata.counts,
         coverage: metadata.coverageDetail?.stationCoverage ?? 0,
         coverageDetail: metadata.coverageDetail,
-        matchQuality: metadata.matchQuality,
-        note: metadata.status === 'ready' ? '已具备构建时导入条件' : '样本不足，未开放查询'
+        association,
+        gate: metadata.gate,
+        note
       },
       null,
       2
@@ -621,11 +680,12 @@ try {
   else {
     console.log(`长春 table2 离线导入
 
-  build [--min-coverage 0.95] [--min-quality 0.9] [--min-run 1] [--max-run 15]
+  build [--min-coverage 0.95] [--min-assoc 0.9] [--max-ambiguity 0.1] [--min-run 1] [--max-run 5]
   status
   rollback <version>
 
-只读 data/changchun/raw；不发起网络请求。覆盖不足时只生成 partial，不进入正式查询。`)
+只读 data/changchun/raw；不发起网络请求，采集时间取自 capture-manifest.json。
+站-线覆盖、关联覆盖、歧义率分别判定；未达门槛时只生成 partial，不进入正式查询。`)
   }
 } catch (e) {
   console.error('错误：' + (e instanceof Error ? e.message : String(e)))
