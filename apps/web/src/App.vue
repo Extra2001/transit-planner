@@ -4,12 +4,11 @@ import { network } from '@transit/core'
 import { usePlannerStore } from './stores/planner'
 import StationField from './components/StationField.vue'
 import PlanView from './components/PlanView.vue'
+import CoveragePanel from './components/CoveragePanel.vue'
 
 const store = usePlannerStore()
 
 const dayLabel = computed(() => (store.day === 'weekday' ? '工作日' : '双休日'))
-const fromLines = computed(() => store.linesAt(store.from))
-const toLines = computed(() => store.linesAt(store.to))
 
 let timer: number | undefined
 
@@ -33,7 +32,7 @@ onMounted(() => store.run())
         <div class="brand-mark" aria-hidden="true">⇄</div>
         <div>
           <h1>逐班换乘</h1>
-          <p>北京地铁 · 计划时刻</p>
+          <p>北京地铁全网 · 计划时刻</p>
         </div>
       </div>
       <span class="pill">原型 · 非实时</span>
@@ -43,21 +42,11 @@ onMounted(() => store.run())
       <section class="card form-card">
         <form @submit.prevent="store.run()">
           <div class="station-row">
-            <StationField
-              v-model="store.from"
-              label="出发站"
-              :stations="store.stations"
-              :lines="fromLines"
-            />
+            <StationField v-model="store.from" label="出发站" :stations="store.stations" />
             <button type="button" class="swap-btn" aria-label="交换起终点" @click="store.swap()">
               ⇅
             </button>
-            <StationField
-              v-model="store.to"
-              label="目的站"
-              :stations="store.stations"
-              :lines="toLines"
-            />
+            <StationField v-model="store.to" label="目的站" :stations="store.stations" />
           </div>
 
           <div class="two-col">
@@ -144,9 +133,10 @@ onMounted(() => store.run())
       </section>
 
       <p class="notice">
-        仅覆盖 1 / 2 / 4 / 5 号线（1 号线四惠—古城），共 {{ network.stations.length }} 站。
-        时刻按已到站台计，不含进站安检；不含节假日专用图与临时调整。
+        覆盖 {{ store.lines.length }} 条线、{{ network.stations.length }} 站（含 1 号线全线、6 号线越行、2/10 环线）。
+        时刻按已到站台计，不含进站安检、节假日专用图与临时调整。
       </p>
+      <CoveragePanel />
     </main>
 
     <footer class="app-footer">
@@ -156,7 +146,8 @@ onMounted(() => store.run())
         <a href="https://github.com/BoyInTheSun/beijing-subway-schedule" target="_blank" rel="noreferrer">
           BoyInTheSun/beijing-subway-schedule
         </a>
-        （CC BY-SA 4.0），其底层为北京地铁、京港地铁官网公布的车站时刻表图片，经 OCR 与人工纠错。
+        （CC BY-SA 4.0），底层为北京地铁、京港地铁官网公布的车站时刻表图片，经 OCR 与人工纠错；
+        各线截止日期与完整性见上方数据覆盖面板。
       </p>
       <p>
         换乘步行时间来自
@@ -166,8 +157,12 @@ onMounted(() => store.run())
         （MIT），为爱好者整理/推算值，并非运营方实测，可按步速缩放。
       </p>
       <p>
-        数据汇总最后更新 {{ network.data.meta.dataUpdatedAt }}。列车时刻可能因调图、临客、故障而变化；
+        数据汇总最后更新 {{ network.data.meta.aggregateUpdatedAt }}。列车时刻可能因调图、临客、故障而变化；
         本原型不提供实时到站，请以现场运营为准。
+      </p>
+      <p>
+        长春：E 出行截图导入工具已就绪，当前未收到截图、0 条核验数据，未纳入本页查询；
+        未核验或不允许再分发的截图不会打包进 PWA。
       </p>
       <p class="foot-dim">可行性研究原型 · 不构成出行保证</p>
     </footer>

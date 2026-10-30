@@ -13,7 +13,11 @@
     "build": "npm run build -w @transit/web",
     "preview": "npm run preview -w @transit/web",
     "test": "npm run test -w @transit/core",
-    "typecheck": "npm run typecheck -w @transit/core && npm run typecheck -w @transit/web"
+    "typecheck": "npm run typecheck -w @transit/core && npm run typecheck -w @transit/web",
+    "test:changchun": "node tools/changchun-import/table2.test.mjs",
+    "changchun:import": "node tools/changchun-import/import-table2.mjs build",
+    "changchun:status": "node tools/changchun-import/import-table2.mjs status",
+    "changchun:rollback": "node tools/changchun-import/import-table2.mjs rollback"
   },
   "devDependencies": {
     "json5": "^2.2.3",

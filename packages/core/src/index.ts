@@ -5,6 +5,12 @@ import raw from './data/network.json'
 export const network = createNetwork(raw as unknown as NetworkData)
 
 export * from './types'
-export { createNetwork, getTransfer, DEFAULT_TRANSFER_SECONDS } from './network'
+export {
+  createNetwork,
+  getTransfer,
+  buildOverrideMap,
+  transferKey,
+  DEFAULT_TRANSFER_SECONDS
+} from './network'
 export { plan, describeArrival } from './router'
 export { parseClock, formatClock, formatDuration, formatMargin } from './time'

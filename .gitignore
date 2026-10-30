@@ -3,3 +3,7 @@ dist/
 .npm-cache/
 *.log
 .DS_Store
+
+# 长春 E 出行原始响应与导入快照：仅本地开发；许可未确认，不随仓库分发
+data/changchun/raw/
+data/changchun/imported/

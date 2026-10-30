@@ -1,8 +1,20 @@
 export type DayType = 'weekday' | 'weekend'
+export type LineStatus = 'supported' | 'review' | 'unsupported'
+export type LineMode = 'metro' | 'tram' | 'maglev' | 'airport'
+export type TransferSource = 'estimate' | 'official' | 'user' | 'predicted'
+export type Confidence = 'high' | 'medium' | 'low'
 
 export interface DirectionInfo {
   id: string
   name: string
+  index: number
+}
+
+export interface LineSource {
+  name: string
+  url: string
+  license: string
+  file: string
 }
 
 export interface LineInfo {
@@ -10,17 +22,66 @@ export interface LineInfo {
   name: string
   shortName: string
   color: string
+  textColor: string
+  mode: LineMode
+  loop: boolean
   directions: DirectionInfo[]
+  source: LineSource
+  /** 该线 BST 文件标注的数据截止日 */
+  dataDate: string | null
+  /** 汇总 schedule.json 的最后提交日 */
+  aggregateDate: string
+  confidence: Confidence
+  status: LineStatus
+  stationCount: number
+  bstStationCount: number
+  tripCount: number
+  passEntries: number
+  dwellUnknown: number
+  stationGaps: string[]
+  extraStations: string[]
+  missingAdjacency: string[]
+  notes: string[]
+}
+
+export interface TransferWindow {
+  /** 0=工作日 1=双休日 2=其他 */
+  day: number
+  start?: number
+  end?: number
 }
 
 export interface TransferRecord {
   s: number
   from: number
   to: number
-  /** 步行秒数（整理值，不含安全余量） */
+  /** 基础步行秒数（不含安全余量） */
   sec: number
-  est?: boolean
+  fromDirection?: number
+  toDirection?: number
+  fromPlatform?: string
+  toPlatform?: string
+  bestCarriage?: string
+  source: TransferSource
+  confidence: Confidence
+  conditional?: boolean
+  windows?: TransferWindow[]
+  distance?: number
+  stairs?: number
   fallback?: boolean
+  note?: string
+  /** 对可疑/局部测量条件的说明，不改变原始秒数 */
+  caution?: string
+}
+
+/** 用户个人实测，覆盖同站同线路对的基础步行时间 */
+export interface TransferOverride {
+  station: string
+  fromLine: string
+  toLine: string
+  seconds: number
+  note?: string
+  createdAt?: string
 }
 
 export interface InterchangeRecord {
@@ -29,14 +90,12 @@ export interface InterchangeRecord {
 }
 
 export interface NetworkMeta {
+  schemaVersion: number
   title: string
   generatedAt: string
-  dataUpdatedAt: string
-  dataUpdatedNote: string
-  source: { name: string; url: string; license: string; upstream: string }
-  transferSource: { name: string; url: string; license: string; note: string }
-  coverage: string
-  stats: Record<string, number>
+  aggregateUpdatedAt: string
+  aggregateUpdatedNote: string
+  counts: Record<string, number>
   warnings: string[]
 }
 
@@ -47,7 +106,6 @@ export interface NetworkData {
   meta: NetworkMeta
   stations: string[]
   lines: LineInfo[]
-  interchanges: InterchangeRecord[]
   transfers: TransferRecord[]
   trips: RawTrip[]
 }
@@ -56,6 +114,7 @@ export interface TripStop {
   station: number
   /** 服务日 0:00 起的分钟数，可大于 1440 */
   minute: number
+  dwellUnknown?: boolean
 }
 
 export interface Trip {
@@ -79,9 +138,8 @@ export interface Network {
   stationIndex: Map<string, number>
   lineAt: number[][]
   interchange: Set<number>
-  transferMap: Map<string, TransferRecord>
+  transferMap: Map<string, TransferRecord[]>
   tripsByDay: Trip[][]
-  /** 按原始车次 id 索引，跨日期类型共用 */
   tripsById: Trip[]
   occByDay: Map<string, Occurrence[]>[]
 }
@@ -100,6 +158,8 @@ export interface PlanOptions {
   sprint: number
   /** 认为“值得跑”的最小全程节省（秒） */
   minSaveSec?: number
+  /** 个人实测换乘时间覆盖 */
+  transferOverrides?: TransferOverride[]
   /** 是否分析换乘余量/下一班；批量搜索时可关闭 */
   analyze?: boolean
 }
@@ -124,6 +184,11 @@ export type Leg =
       baseSeconds: number
       estimated: boolean
       fallback: boolean
+      source: TransferSource
+      confidence: Confidence
+      directionDependent: boolean
+      variantCount: number
+      risk?: string
     }
 
 export interface TransferAdvice {
@@ -132,7 +197,12 @@ export interface TransferAdvice {
   toLine: number
   walkSeconds: number
   baseSeconds: number
+  source: TransferSource
+  confidence: Confidence
   estimated: boolean
+  directionDependent: boolean
+  variantCount: number
+  risk?: string
   /** 正常步速下，走完并留足余量后距发车的可支配秒数 */
   marginSeconds: number
   /** 若加快脚步，可赶上的最近一班（车次在该站发车时刻） */

@@ -4,12 +4,35 @@ import {
   network,
   plan,
   type DayType,
-  type PlanResult
+  type PlanResult,
+  type TransferOverride
 } from '@transit/core'
+
+const STORAGE_KEY = 'transit-planner.overrides.v1'
 
 function defaultDay(): DayType {
   const d = new Date().getDay()
   return d === 0 || d === 6 ? 'weekend' : 'weekday'
+}
+
+function loadOverrides(): TransferOverride[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (o) =>
+        o &&
+        typeof o.station === 'string' &&
+        typeof o.fromLine === 'string' &&
+        typeof o.toLine === 'string' &&
+        typeof o.seconds === 'number' &&
+        o.seconds >= 0
+    )
+  } catch {
+    return []
+  }
 }
 
 export const usePlannerStore = defineStore('planner', () => {
@@ -24,10 +47,15 @@ export const usePlannerStore = defineStore('planner', () => {
   const result = ref<PlanResult | null>(null)
   const error = ref('')
   const computing = ref(false)
+  const overrides = ref<TransferOverride[]>(loadOverrides())
 
+  const lines = network.lines
+  const counts = network.data.meta.counts
   const stations = computed(() =>
     [...network.stations].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
   )
+  const reviewLines = computed(() => lines.filter((l) => l.status === 'review'))
+  const supportedLines = computed(() => lines.filter((l) => l.status === 'supported'))
 
   const speedLabel = computed(() => {
     if (speed.value <= 0.9) return '偏慢'
@@ -43,19 +71,55 @@ export const usePlannerStore = defineStore('planner', () => {
     return network.lineAt[idx].map((i) => network.lines[i])
   }
 
-  function linesAtIdx(idx: number) {
-    return network.lineAt[idx].map((i) => network.lines[i])
-  }
-
   function stationName(idx: number) {
     return network.stations[idx]
+  }
+
+  function findOverride(station: string, fromLine: string, toLine: string) {
+    return overrides.value.find(
+      (o) => o.station === station && o.fromLine === fromLine && o.toLine === toLine
+    )
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides.value))
+    } catch {
+      /* 本地存储不可用时仅本次会话生效 */
+    }
+  }
+
+  function saveOverride(station: string, fromLine: string, toLine: string, seconds: number) {
+    const value = Math.max(0, Math.min(1800, Math.round(seconds)))
+    const idx = overrides.value.findIndex(
+      (o) => o.station === station && o.fromLine === fromLine && o.toLine === toLine
+    )
+    const record: TransferOverride = {
+      station,
+      fromLine,
+      toLine,
+      seconds: value,
+      note: '我的实测',
+      createdAt: new Date().toISOString()
+    }
+    if (idx >= 0) overrides.value.splice(idx, 1, record)
+    else overrides.value.push(record)
+    persist()
+    run()
+  }
+
+  function clearOverride(station: string, fromLine: string, toLine: string) {
+    overrides.value = overrides.value.filter(
+      (o) => !(o.station === station && o.fromLine === fromLine && o.toLine === toLine)
+    )
+    persist()
+    run()
   }
 
   function swap() {
     const t = from.value
     from.value = to.value
     to.value = t
-    run()
   }
 
   function run() {
@@ -75,7 +139,8 @@ export const usePlannerStore = defineStore('planner', () => {
         speed: speed.value,
         bufferSec: bufferSec.value,
         sprint,
-        minSaveSec: 90
+        minSaveSec: 90,
+        transferOverrides: overrides.value
       })
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e)
@@ -96,11 +161,18 @@ export const usePlannerStore = defineStore('planner', () => {
     result,
     error,
     computing,
+    overrides,
+    lines,
+    counts,
     stations,
+    reviewLines,
+    supportedLines,
     speedLabel,
     linesAt,
-    linesAtIdx,
     stationName,
+    findOverride,
+    saveOverride,
+    clearOverride,
     swap,
     run
   }

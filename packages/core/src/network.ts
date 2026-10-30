@@ -2,12 +2,24 @@ import type {
   Network,
   NetworkData,
   Occurrence,
+  TransferOverride,
   TransferRecord,
   Trip,
   TripStop
 } from './types'
 
 export const DEFAULT_TRANSFER_SECONDS = 180
+
+export function transferKey(station: string, fromLine: string, toLine: string): string {
+  return `${station}|${fromLine}|${toLine}`
+}
+
+export interface TransferSelection {
+  record: TransferRecord
+  directionDependent: boolean
+  variantCount: number
+  risk?: string
+}
 
 export function createNetwork(data: NetworkData): Network {
   const stationIndex = new Map<string, number>()
@@ -56,7 +68,6 @@ export function createNetwork(data: NetworkData): Network {
     for (const arr of occMap.values()) arr.sort((a, b) => a.minute - b.minute || a.trip - b.trip)
   }
 
-  // 站点—线路关系
   for (let day = 0; day < 2; day++) {
     for (const trip of tripsByDay[day]) {
       for (const stop of trip.stops) {
@@ -72,9 +83,15 @@ export function createNetwork(data: NetworkData): Network {
     if (lines.length >= 2) interchange.add(s)
   })
 
-  const transferMap = new Map<string, TransferRecord>()
+  const transferMap = new Map<string, TransferRecord[]>()
   for (const rec of data.transfers) {
-    transferMap.set(`${rec.s}:${rec.from}:${rec.to}`, rec)
+    const key = `${rec.s}:${rec.from}:${rec.to}`
+    let arr = transferMap.get(key)
+    if (!arr) {
+      arr = []
+      transferMap.set(key, arr)
+    }
+    arr.push(rec)
   }
 
   return {
@@ -91,22 +108,85 @@ export function createNetwork(data: NetworkData): Network {
   }
 }
 
+/** 同一线路对可能有方向/时段多个变体；路由取保守上界。 */
 export function getTransfer(
   net: Network,
   station: number,
   fromLine: number,
-  toLine: number
-): TransferRecord {
-  const found = net.transferMap.get(`${station}:${fromLine}:${toLine}`)
-  if (found) return found
-  return {
-    s: station,
-    from: fromLine,
-    to: toLine,
-    sec: DEFAULT_TRANSFER_SECONDS,
-    est: true,
-    fallback: true
+  toLine: number,
+  overrides?: Map<string, TransferRecord>
+): TransferSelection {
+  const variants = net.transferMap.get(`${station}:${fromLine}:${toLine}`) ?? []
+  const stationName = net.stations[station]
+  const key = transferKey(stationName, net.lines[fromLine].id, net.lines[toLine].id)
+  const override = overrides?.get(key)
+  if (override) {
+    return {
+      record: override,
+      directionDependent: false,
+      variantCount: variants.length,
+      risk: override.sec < 30 ? `个人实测仅 ${override.sec} 秒，仍偏乐观，请确认。` : undefined
+    }
   }
+
+  if (variants.length === 0) {
+    return {
+      record: {
+        s: station,
+        from: fromLine,
+        to: toLine,
+        sec: DEFAULT_TRANSFER_SECONDS,
+        source: 'estimate',
+        confidence: 'low',
+        fallback: true,
+        note: '无整理值，按 180 秒默认估计'
+      },
+      directionDependent: false,
+      variantCount: 0,
+      risk: '该换乘没有整理值，按 180 秒默认估计。'
+    }
+  }
+
+  let chosen = variants[0]
+  for (const v of variants) if (v.sec > chosen.sec) chosen = v
+  const directionDependent = variants.some(
+    (v) => v.fromDirection !== undefined || v.toDirection !== undefined
+  )
+  let risk: string | undefined
+  if (chosen.caution) {
+    risk = chosen.caution
+  } else if (chosen.sec <= 30) {
+    risk = `换乘记录仅 ${chosen.sec} 秒，可能明显偏乐观；已保留原值，未自动改写。`
+  } else if (chosen.fallback) {
+    risk = '该线路对缺少整理值，按 180 秒默认估计。'
+  }
+
+  return { record: chosen, directionDependent, variantCount: variants.length, risk }
+}
+
+export function buildOverrideMap(
+  overrides: TransferOverride[] | undefined,
+  net: Network
+): Map<string, TransferRecord> | undefined {
+  if (!overrides?.length) return undefined
+  const map = new Map<string, TransferRecord>()
+  for (const o of overrides) {
+    const s = net.stationIndex.get(o.station)
+    const from = net.lines.findIndex((l) => l.id === o.fromLine)
+    const to = net.lines.findIndex((l) => l.id === o.toLine)
+    if (s === undefined || from < 0 || to < 0) continue
+    map.set(transferKey(o.station, o.fromLine, o.toLine), {
+      s,
+      from,
+      to,
+      sec: Math.max(0, Math.round(o.seconds)),
+      source: 'user',
+      confidence: 'high',
+      note: o.note || '个人实测',
+      fallback: false
+    })
+  }
+  return map
 }
 
 export function findOccurrenceIndex(occs: Occurrence[], minute: number): number {

@@ -1,0 +1,20 @@
+{
+  "status": "partial",
+  "version": "2026-10-30T06-31-27-124Z",
+  "capturedAt": "2026-10-30T06:09:00Z",
+  "counts": {
+    "lines": 1,
+    "stations": 2,
+    "trips": 173,
+    "groups": 3
+  },
+  "coverage": 0.13333333333333333,
+  "coverageDetail": {
+    "coveredStations": 2,
+    "expectedStations": 15,
+    "stationCoverage": 0.13333333333333333,
+    "groupMaxCoverage": 0.13333333333333333,
+    "definition": "站覆盖率 = 已导入的不同车站数 / 该线路全部车站数；不是班次覆盖率。"
+  },
+  "note": "样本不足，未开放查询"
+}

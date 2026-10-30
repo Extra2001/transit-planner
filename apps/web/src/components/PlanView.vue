@@ -60,6 +60,10 @@ function lineColor(idx: number): string {
   return network.lines[idx]?.color ?? '#666'
 }
 
+function lineTextColor(idx: number): string {
+  return network.lines[idx]?.textColor ?? '#fff'
+}
+
 function directionName(line: number, dir: number): string {
   return network.lines[line]?.directions[dir]?.name ?? ''
 }
@@ -127,7 +131,7 @@ const walkCount = computed(() => it.value?.legs.filter((l) => l.type === 'walk')
       <li v-for="(leg, i) in it.legs" :key="i" class="leg" :class="leg.type">
         <template v-if="leg.type === 'ride'">
           <div class="ride-head">
-            <span class="line-badge" :style="{ background: lineColor(leg.line) }">
+            <span class="line-badge" :style="{ background: lineColor(leg.line), color: lineTextColor(leg.line) }">
               {{ lineShort(leg.line) }}
             </span>
             <span class="ride-dir">{{ directionName(leg.line, leg.dir) }}</span>

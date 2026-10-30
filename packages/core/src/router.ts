@@ -5,15 +5,18 @@ import type {
   PlanOptions,
   PlanResult,
   TransferAdvice,
-  Trip
+  TransferRecord,
+  TransferSource,
+  Confidence
 } from './types'
-import { findOccurrenceIndex, getTransfer } from './network'
+import { buildOverrideMap, findOccurrenceIndex, getTransfer } from './network'
 import { formatClock, parseClock } from './time'
 
 interface WalkOptions {
   speed: number
   sprint: number
   bufferSec: number
+  overrides?: Map<string, TransferRecord>
 }
 
 interface EdgeRide {
@@ -38,6 +41,11 @@ interface EdgeWalk {
   baseSeconds: number
   estimated: boolean
   fallback: boolean
+  source: TransferSource
+  confidence: Confidence
+  directionDependent: boolean
+  variantCount: number
+  risk?: string
 }
 
 type Edge = EdgeRide | EdgeWalk
@@ -122,10 +130,7 @@ function runDijkstra(
     parent: number,
     edge: Edge
   ): void => {
-    if (
-      time < dist[key] ||
-      (time === dist[key] && transferCount < transfers[key])
-    ) {
+    if (time < dist[key] || (time === dist[key] && transferCount < transfers[key])) {
       dist[key] = time
       transfers[key] = transferCount
       prev[key] = { parent, edge }
@@ -142,9 +147,15 @@ function runDijkstra(
       seconds: 0,
       baseSeconds: 0,
       estimated: false,
-      fallback: false
+      fallback: false,
+      source: 'official',
+      confidence: 'high',
+      directionDependent: false,
+      variantCount: 0
     })
   }
+
+  const occMap = net.occByDay[day]
 
   while (heap.size > 0) {
     const item = heap.pop()!
@@ -153,18 +164,14 @@ function runDijkstra(
     const station = Math.floor(key / L)
     const line = key % L
 
-    if (station === toIdx) {
-      return { dist, prev, transfers, goalKey: key }
-    }
+    if (station === toIdx) return { dist, prev, transfers, goalKey: key }
 
-    const occMap = net.occByDay[day]
-
-    // 乘车：同站同线同方向，取到达后最早可上的若干班
+    // 乘车：取到达后最早可上的若干班；快慢车/越行已体现在 trip 站序中
     for (let dir = 0; dir < net.lines[line].directions.length; dir++) {
       const occs = occMap.get(`${line}:${dir}:${station}`)
       if (!occs || occs.length === 0) continue
       const startIdx = findOccurrenceIndex(occs, item.t / 60)
-      const end = Math.min(occs.length, startIdx + 24)
+      const end = Math.min(occs.length, startIdx + 40)
       for (let k = startIdx; k < end; k++) {
         const occ = occs[k]
         const trip = net.tripsById[occ.trip]
@@ -190,10 +197,11 @@ function runDijkstra(
       }
     }
 
-    // 换乘：站内步行到另一条线路
+    // 换乘：同站步行到另一条线路；取同线路对的保守上界
     for (const other of net.lineAt[station]) {
       if (other === line) continue
-      const rec = getTransfer(net, station, line, other)
+      const selection = getTransfer(net, station, line, other, opt.overrides)
+      const rec = selection.record
       const seconds = walkSeconds(rec.sec, opt)
       relax(station * L + other, item.t + seconds, transfers[key] + 1, key, {
         type: 'walk',
@@ -202,8 +210,13 @@ function runDijkstra(
         toLine: other,
         seconds,
         baseSeconds: rec.sec,
-        estimated: Boolean(rec.est),
-        fallback: Boolean(rec.fallback)
+        estimated: rec.source === 'estimate' || Boolean(rec.fallback),
+        fallback: Boolean(rec.fallback),
+        source: rec.source,
+        confidence: rec.confidence,
+        directionDependent: selection.directionDependent,
+        variantCount: selection.variantCount,
+        risk: selection.risk
       })
     }
   }
@@ -233,7 +246,12 @@ function reconstruct(net: Network, run: RunResult, startSec: number): Itinerary 
         seconds: edge.seconds,
         baseSeconds: edge.baseSeconds,
         estimated: edge.estimated,
-        fallback: edge.fallback
+        fallback: edge.fallback,
+        source: edge.source,
+        confidence: edge.confidence,
+        directionDependent: edge.directionDependent,
+        variantCount: edge.variantCount,
+        risk: edge.risk
       })
     } else {
       legs.push({
@@ -269,18 +287,16 @@ function findTripOccurrence(
 ): number {
   const occs = net.occByDay[day].get(`${line}:${dir}:${station}`)
   if (!occs) return -1
-  let idx = findOccurrenceIndex(occs, minute)
+  const idx = findOccurrenceIndex(occs, minute)
   for (let k = Math.max(0, idx - 3); k < Math.min(occs.length, idx + 4); k++) {
     if (occs[k].trip === tripId) return k
   }
-  // 同一分钟多班时再线性兜底
   for (let k = 0; k < occs.length; k++) if (occs[k].trip === tripId) return k
   return -1
 }
 
 function tripArrivalAt(
   net: Network,
-  day: number,
   tripId: number,
   fromPos: number,
   alightStation: number
@@ -323,34 +339,24 @@ function transferAdvice(
       const catchThreshold =
         before.arrive + Math.round(leg.baseSeconds / (opt.speed * sprintFactor)) + opt.bufferSec
 
-      // 最近一班“跑才赶得上”的前车
-      for (let k = idx - 1; k >= Math.max(0, idx - 30); k--) {
+      for (let k = idx - 1; k >= 0; k--) {
         const occ = occs[k]
         const depart = occ.minute * 60
         if (depart <= catchThreshold) break
-        const arriveAtAlight = tripArrivalAt(net, day, occ.trip, occ.pos, after.to)
+        const arriveAtAlight = tripArrivalAt(net, occ.trip, occ.pos, after.to)
         if (arriveAtAlight === null) continue
-        const onward = runDijkstra(
-          net,
-          day,
-          after.to,
-          toIdx,
-          arriveAtAlight,
-          { ...opt }
-        )
+        const onward = runDijkstra(net, day, after.to, toIdx, arriveAtAlight, { ...opt })
         if (!onward) continue
-        const finalArrival = onward.dist[onward.goalKey]
-        const gain = normalArrival - finalArrival
+        const gain = normalArrival - onward.dist[onward.goalKey]
         if (gain > 0) {
           sprintCatch = { depart, arriveAtAlight, gainSeconds: gain }
           break
         }
       }
 
-      // 下一班可坐车次
-      for (let k = idx + 1; k < Math.min(occs.length, idx + 30); k++) {
+      for (let k = idx + 1; k < occs.length; k++) {
         const occ = occs[k]
-        const arriveAtAlight = tripArrivalAt(net, day, occ.trip, occ.pos, after.to)
+        const arriveAtAlight = tripArrivalAt(net, occ.trip, occ.pos, after.to)
         if (arriveAtAlight === null) continue
         const onward = runDijkstra(net, day, after.to, toIdx, arriveAtAlight, { ...opt })
         if (!onward) continue
@@ -369,7 +375,12 @@ function transferAdvice(
       toLine: leg.toLine,
       walkSeconds: leg.seconds,
       baseSeconds: leg.baseSeconds,
+      source: leg.source,
+      confidence: leg.confidence,
       estimated: leg.estimated,
+      directionDependent: leg.directionDependent,
+      variantCount: leg.variantCount,
+      risk: leg.risk,
       marginSeconds: margin,
       sprintCatch,
       nextTrain
@@ -380,11 +391,17 @@ function transferAdvice(
 
 function itineraryWarnings(net: Network, legs: Leg[]): string[] {
   const warnings: string[] = []
+  const seen = new Set<string>()
   for (const leg of legs) {
-    if (leg.type === 'walk' && leg.fallback) {
-      warnings.push(
-        `${net.stations[leg.station]} 缺少 ${net.lines[leg.fromLine].name}→${net.lines[leg.toLine].name} 的换乘步行整理值，按 180 秒估计。`
-      )
+    if (leg.type !== 'walk') continue
+    if (leg.fallback) {
+      const msg = `${net.stations[leg.station]} 缺少 ${net.lines[leg.fromLine].name}→${net.lines[leg.toLine].name} 的换乘步行整理值，按 180 秒估计。`
+      if (!seen.has(msg)) warnings.push(msg)
+      seen.add(msg)
+    } else if (leg.risk) {
+      const msg = `${net.stations[leg.station]}：${leg.risk}`
+      if (!seen.has(msg)) warnings.push(msg)
+      seen.add(msg)
     }
   }
   return warnings
@@ -398,7 +415,7 @@ export function plan(net: Network, options: PlanOptions): PlanResult {
   if (fromIdx === undefined || toIdx === undefined) {
     return {
       ok: false,
-      reason: '出发站或目的站不在当前原型覆盖范围内。',
+      reason: '出发站或目的站不在当前数据覆盖范围内。',
       savingSeconds: 0,
       worthRunning: false,
       minSaveSeconds: options.minSaveSec ?? 90,
@@ -407,6 +424,7 @@ export function plan(net: Network, options: PlanOptions): PlanResult {
   }
   const startSec = parseClock(options.time) * 60
   const minSave = options.minSaveSec ?? 90
+  const overrides = buildOverrideMap(options.transferOverrides, net)
 
   if (fromIdx === toIdx) {
     return {
@@ -430,7 +448,8 @@ export function plan(net: Network, options: PlanOptions): PlanResult {
   const normalOpt: WalkOptions = {
     speed: options.speed,
     sprint: 1,
-    bufferSec: options.bufferSec
+    bufferSec: options.bufferSec,
+    overrides
   }
   const normalRun = runDijkstra(net, day, fromIdx, toIdx, startSec, normalOpt)
   if (!normalRun) {
@@ -446,6 +465,17 @@ export function plan(net: Network, options: PlanOptions): PlanResult {
 
   const normal = reconstruct(net, normalRun, startSec)
   normal.warnings = itineraryWarnings(net, normal.legs)
+  const usedLines = new Set(
+    normal.legs.filter((l): l is Extract<Leg, { type: 'ride' }> => l.type === 'ride').map((l) => l.line)
+  )
+  const reviewUsed = [...usedLines]
+    .map((i) => net.lines[i])
+    .filter((l) => l.status === 'review')
+  if (reviewUsed.length) {
+    warnings.push(
+      `本方案使用待核验线路：${reviewUsed.map((l) => l.name).join('、')}（原因见数据覆盖面板）。`
+    )
+  }
   if (options.analyze !== false) {
     normal.transfers = transferAdvice(net, day, normal.legs, normalOpt, options.sprint, normal.arrival, toIdx)
   }
@@ -456,14 +486,23 @@ export function plan(net: Network, options: PlanOptions): PlanResult {
     const fastOpt: WalkOptions = {
       speed: options.speed,
       sprint: options.sprint,
-      bufferSec: options.bufferSec
+      bufferSec: options.bufferSec,
+      overrides
     }
     const fastRun = runDijkstra(net, day, fromIdx, toIdx, startSec, fastOpt)
     if (fastRun) {
       const candidate = reconstruct(net, fastRun, startSec)
       candidate.warnings = itineraryWarnings(net, candidate.legs)
       if (options.analyze !== false) {
-        candidate.transfers = transferAdvice(net, day, candidate.legs, fastOpt, options.sprint, candidate.arrival, toIdx)
+        candidate.transfers = transferAdvice(
+          net,
+          day,
+          candidate.legs,
+          fastOpt,
+          options.sprint,
+          candidate.arrival,
+          toIdx
+        )
       }
       savingSeconds = normal.arrival - candidate.arrival
       if (savingSeconds > 0) fast = candidate
