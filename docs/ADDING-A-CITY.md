@@ -115,6 +115,9 @@ cities/<id>/
 
 ## 4. 适配器
 
+发布时会自动在 `status.json` 写入 `dataSha256`；若手工改过 `network.json`，运行
+`npm run data:hash` 重算，否则加载器会判定数据损坏。
+
 现成参考：
 
 - `tools/demo-city/generate.mjs`：最小适配器（合成数据，可直接复制改名）；

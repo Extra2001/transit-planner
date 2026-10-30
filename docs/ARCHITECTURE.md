@@ -104,6 +104,9 @@ tools/
 
 ## 加载与缓存
 
+详见 [OFFLINE-CACHE.md](OFFLINE-CACHE.md)：按 `dataVersion` 分键、CacheFirst 运行时缓存、
+`status.json.dataSha256` 完整性校验、按需清理旧版本与已下线城市。
+
 - manifest 在构建期通过 `import.meta.glob('cities/*/city.json')` 收集（体积极小）。
 - 数据在运行时 `fetch(dataUrl?v=dataVersion)`，**不进入首屏 JS**。
 - `loader.ts` 按 `id@dataVersion` 做内存缓存；Service Worker 对 `cities/` 走 CacheFirst，
@@ -168,6 +171,8 @@ v1 的 `dayType`（0/1）保留在车次里。v2 增加：
 | 按需加载 | 完成：首屏 JS ≈ 118 KB（gzip 46 KB），城市数据选中后下载 |
 | 独立版本 | 完成：`dataVersion` 作为缓存键 |
 | 离线 | 完成：CacheFirst 运行时缓存 + 「下载离线数据」按钮，断网可用 |
+| 完整性校验 | 完成：发布写 `dataSha256`，加载/离线下载时校验 SHA-256 |
+| 缓存清理 | 完成：按需清理同城旧版本与已下线城市，规则有单测 |
 | 稳定站点 ID | 完成：v2 `stations[].id`，别名与多线路站点关系 |
 | 服务日历 | 完成：`services`（dayType + days + exceptions） |
 | schema 校验/迁移 | 完成：`validateNetworkData` / `migrateNetworkData` |

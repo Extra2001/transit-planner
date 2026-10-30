@@ -6,6 +6,7 @@
  *   - status 必须带上来源、采集时间、有效期、许可与再分发状态；
  *   - 不判断许可，是否允许公开由 city.json 与 data:sync 决定。
  */
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -24,6 +25,9 @@ export function publishCity({ cityId, network, status, manifest, root }) {
   const networkFile = path.join(dir, 'network.json')
   if (network) fs.writeFileSync(networkFile, JSON.stringify(network))
   else fs.rmSync(networkFile, { force: true })
+
+  const payload = network ? fs.readFileSync(networkFile) : null
+  const dataSha256 = payload ? createHash('sha256').update(payload).digest('hex') : null
 
   const provenance = manifest?.provenance ?? {}
   const license = manifest?.license ?? {}
@@ -46,6 +50,8 @@ export function publishCity({ cityId, network, status, manifest, root }) {
       synthetic: provenance.synthetic ?? false,
       modified: provenance.modified ?? null
     },
+    dataSha256,
+    byteSize: payload ? payload.byteLength : 0,
     note: status.note ?? '',
     warnings: status.warnings ?? network?.meta?.warnings ?? []
   }

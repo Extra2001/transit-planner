@@ -13,3 +13,11 @@ cities/changchun/network.json
 cities/changchun/status.json
 # 由 data:sync 生成的站点副本，不入库
 apps/web/public/cities/
+
+# research/raw：只保留明确许可的上游数据（CC BY-SA 4.0 / MIT），
+# 运营方页面、抓取留痕、许可不明的第三方导出仅本地留存，不再入库
+research/raw/*
+!research/raw/bj_schedule_all.json
+!research/raw/bst_*.json5
+!research/raw/metadata.schema.json5
+!research/raw/bst_spec.md

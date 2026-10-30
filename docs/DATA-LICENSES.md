@@ -12,7 +12,7 @@
 | G 生成数据 | 本项目从 U/本地采集生成 | `cities/beijing/network.json` | 是 | 是 |
 | G* 生成数据（受限） | 许可未确认的生成数据 | `cities/changchun/network.json` | **否** | **否** |
 | L 本地采集 | 原始响应、导入快照 | `data/changchun/raw/`、`data/changchun/imported/` | 否 | 否 |
-| R 调研材料 | 抓取页面、截图、检索结果 | `research/raw/`（大部分）、`research/screenshots/` | 是 | 否 |
+| R 调研材料 | 抓取页面、截图、检索结果 | `research/raw/`（大部分）、`research/screenshots/` | 仅原创与上游许可部分 | 否 |
 | B 构建产物 | `dist`、PWA 缓存 | `apps/web/dist/`、`apps/web/public/cities/` | 否 | — |
 
 ## 2. 逐文件审计
@@ -32,10 +32,10 @@
 | --- | --- | --- | --- |
 | `research/raw/bj_schedule_all.json`（9.8MB） | BoyInTheSun/beijing-subway-schedule | CC BY-SA 4.0 | 允许，须署名 + 相同许可 |
 | `research/raw/bst_*.json5`、`metadata.schema.json5`、`bst_spec.md` | Mick235711/Beijing-Subway-Tools | MIT | 允许，保留版权声明 |
-| `research/raw/om_bj_*.json`、`om_cc_*.json`、`om_quality.md` | 第三方开放数据检索导出（逐项许可未核实） | 未确认 | **仅研究，不再分发** |
-| `research/raw/mtr_*`、`cc_timetable1.jpg`、`cc_timetable_notice.html`、`ccqg_home.html` | 运营方公开页面/时刻图截图 | 未确认 | **仅研究，不再分发** |
-| `research/raw/*.html`、`*.js`、`*.txt`（检索页、接口脚本、抓取片段） | 公开网页留痕 | 未确认 | **仅研究，不再分发** |
-| `research/screenshots/*.png`、`research/report.md` | 本项目 | MIT | 允许 |
+| `research/raw/om_bj_*.json`、`om_cc_*.json`、`om_quality.md` | 第三方开放数据检索导出（逐项许可未核实） | 未确认 | **仅研究，已移出追踪、本地留存** |
+| `research/raw/mtr_*`、`cc_timetable1.jpg`、`cc_timetable_notice.html`、`ccqg_home.html` | 运营方公开页面/时刻图截图 | 未确认 | **仅研究，已移出追踪、本地留存** |
+| `research/raw/*.html`、`*.js`、`*.txt`（检索页、接口脚本、抓取片段） | 公开网页留痕 | 未确认 | **仅研究，已移出追踪、本地留存** |
+| `research/screenshots/*.png`、`research/report.md` | 本项目 | MIT | 允许，保留入库 |
 
 ### 2.3 生成数据（G / G*）
 
@@ -88,7 +88,7 @@
 | B. 平台侧删除 | 通过 GitHub Support 申请清除特定路径的历史（不涉及 force push） | 平台层面减少暴露 | 需平台受理，可能被拒；fork 无法覆盖 |
 | C. 重写历史 | `filter-repo` + force push 全部分支 | 彻底移除 | **本轮明确不做**：破坏所有克隆、引用与协作记录 |
 | D. 迁移新仓库 | 新建仓库，只导入当前干净树，旧仓库归档 | 新旧分离，历史可控 | 需迁移 Issues/Stars/链接；旧库仍在 |
-| E. 移出调研材料 | 将 `research/raw` 中 R 类文件移出仓库 | 降低「仅研究」材料的暴露 | 需维护者确认是否保留研究可复现性 |
+| E. 移出调研材料 | 将 `research/raw` 中 R 类文件移出仓库 | 降低「仅研究」材料的暴露 | **已执行**（2026-10-30）：23 个文件 `git rm --cached`，本地保留，`.gitignore` 白名单兜底；未改历史 |
 
 在维护者决定前，补充约束已经生效：
 

@@ -11,14 +11,22 @@
  * 用法：
  *   node scripts/sync-cities.mjs
  *   node scripts/sync-cities.mjs --include-restricted
+ *   node scripts/sync-cities.mjs --cities=<dir> --out=<dir>   # 供闸门负向测试使用
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const citiesDir = path.join(root, 'cities')
-const target = path.join(root, 'apps/web/public/cities')
+
+function argPath(name, fallback) {
+  const prefix = `--${name}=`
+  const hit = process.argv.find((a) => a.startsWith(prefix))
+  return hit ? path.resolve(hit.slice(prefix.length)) : fallback
+}
+
+const citiesDir = argPath('cities', path.join(root, 'cities'))
+const target = argPath('out', path.join(root, 'apps/web/public/cities'))
 const includeRestricted =
   process.argv.includes('--include-restricted') || process.env.INCLUDE_RESTRICTED_DATA === '1'
 const includeSynthetic =

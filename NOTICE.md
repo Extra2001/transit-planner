@@ -11,6 +11,7 @@
 | 换乘步行时间 | 已并入北京数据文件 | MIT（上游） | 允许 |
 | 调研原始材料 | `research/` | 多种 | 多数未确认，仅存档 |
 | 界面截图、研究报告 | `research/screenshots/`、`research/report.md` | MIT | 允许 |
+| 调研留痕（网页、运营方图片、第三方导出） | `research/raw/` 部分文件 | 未确认 | **不入库**，仅本地留存（`.gitignore` 白名单） |
 
 详细说明：
 

@@ -54,7 +54,7 @@ npm run test:changchun
 
 ```bash
 npm install
-npm run build:data   # 从 research/raw 生成 packages/core/src/data/network.json
+npm run build:data   # 从 research/raw 生成 cities/beijing/network.json + status.json
 npm run dev          # http://localhost:5173
 ```
 
@@ -120,7 +120,8 @@ research/               # 调研报告与原始材料快照
 | 代码（`packages/`、`apps/`、`scripts/`、`tools/`） | MIT，见 [LICENSE](LICENSE) | 允许 |
 | 北京时刻与换乘数据（`cities/beijing/network.json`） | CC BY-SA 4.0，见 [data/licenses/beijing.md](data/licenses/beijing.md) | 允许（须署名 + 相同许可） |
 | 长春时刻数据（`cities/changchun/`） | **未确认**，见 [data/licenses/changchun.md](data/licenses/changchun.md) | **不允许**，默认不随仓库、不进公开构建 |
-| 调研原始材料（`research/raw/`） | 多种，多为仅研究 | 见 [data/licenses/research-artifacts.md](data/licenses/research-artifacts.md) |
+| 调研原始材料（`research/raw/`） | 上游数据 MIT / CC BY-SA；留痕材料未确认 | 仅明确许可部分入库，见 [data/licenses/research-artifacts.md](data/licenses/research-artifacts.md) |
+| 城市离线缓存 | 本项目 | 见 [docs/OFFLINE-CACHE.md](docs/OFFLINE-CACHE.md) |
 
 - 北京时刻源自 [BoyInTheSun/beijing-subway-schedule](https://github.com/BoyInTheSun/beijing-subway-schedule)，底层为北京地铁/京港地铁官网公布的车站逐班时刻表图片，经 OCR 与人工纠错。
 - 换乘步行时间源自 [Mick235711/Beijing-Subway-Tools](https://github.com/Mick235711/Beijing-Subway-Tools)（MIT），为爱好者整理/推算值，非运营方实测。

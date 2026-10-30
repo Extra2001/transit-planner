@@ -6,14 +6,25 @@
  *   1. dist/cities/ 下只允许出现 license.redistribution = allowed 的城市；
  *   2. 受限城市的数据文件名不得出现在任何构建产物里；
  *   3. 入口 JS 不应内联整份城市时刻表（用 trips 数组特征串粗查）。
+ *
+ * 用法：
+ *   node scripts/verify-public.mjs
+ *   node scripts/verify-public.mjs --dist=<dir> --cities=<dir>   # 供闸门负向测试使用
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const dist = path.join(root, 'apps/web/dist')
-const citiesDir = path.join(root, 'cities')
+
+function argPath(name, fallback) {
+  const prefix = `--${name}=`
+  const hit = process.argv.find((a) => a.startsWith(prefix))
+  return hit ? path.resolve(hit.slice(prefix.length)) : fallback
+}
+
+const dist = argPath('dist', path.join(root, 'apps/web/dist'))
+const citiesDir = argPath('cities', path.join(root, 'cities'))
 
 if (!fs.existsSync(dist)) {
   console.error(`找不到构建产物：${dist}，请先运行 npm run build`)

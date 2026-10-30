@@ -13,7 +13,7 @@
  *   - 换乘站多线路站点关系（丙站同时属于 demo-1 / demo-2）
  *   - 服务日历（工作日 / 双休日）
  */
-import fs from 'node:fs'
+import { publishCity, readManifest } from '../../scripts/lib/publish-city.mjs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -133,6 +133,20 @@ const data = {
   ]
 }
 
-const out = path.join(root, 'cities/demo/network.json')
-fs.writeFileSync(out, JSON.stringify(data, null, 1) + '\n')
-console.log(`写出 ${path.relative(root, out)}：${trips.length} 班、${stations.length} 站、${lines.length} 线`)
+const published = publishCity({
+  cityId: 'demo',
+  network: data,
+  manifest: readManifest(root, 'demo'),
+  root,
+  status: {
+    status: 'ready',
+    capturedAt: '2026-01-01',
+    counts: data.meta.counts,
+    coverage: 1,
+    coverageDetail: { coveredStations: stations.length, expectedStations: stations.length, stationCoverage: 1 },
+    note: '合成数据，仅用于演示城市接入方式，不能用于真实出行。'
+  }
+})
+console.log(
+  `写出 ${path.relative(root, published.networkFile)} 与 status.json：${trips.length} 班、${stations.length} 站、${lines.length} 线`
+)

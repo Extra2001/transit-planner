@@ -1,0 +1,37 @@
+{
+ "status": "ready",
+ "version": "2026-10-30T09-04-36-845Z",
+ "capturedAt": "2026-01-01",
+ "counts": {
+  "lines": 2,
+  "stations": 6,
+  "trips": 33,
+  "transferVariants": 2,
+  "fallbackTransfers": 0
+ },
+ "coverage": 1,
+ "coverageDetail": {
+  "coveredStations": 6,
+  "expectedStations": 6,
+  "stationCoverage": 1
+ },
+ "license": {
+  "id": "CC0-1.0",
+  "redistribution": "allowed"
+ },
+ "provenance": {
+  "source": "人工合成（tools/demo-city/generate.mjs）",
+  "validFrom": "2026-01-01",
+  "validUntil": null,
+  "official": false,
+  "realtime": false,
+  "synthetic": true,
+  "modified": "无"
+ },
+ "dataSha256": "e74319bee68515447a46c0e0423a57dc3f37d697754b78f5a963dce3c0fed3ce",
+ "byteSize": 3643,
+ "note": "合成数据，仅用于演示城市接入方式，不能用于真实出行。",
+ "warnings": [
+  "合成数据，不能用于真实出行"
+ ]
+}

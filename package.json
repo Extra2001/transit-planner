@@ -22,7 +22,8 @@
     "data:sync": "node scripts/sync-cities.mjs",
     "data:validate": "vitest run packages/core/test/data-validation.test.ts",
     "verify:public": "node scripts/verify-public.mjs",
-    "dev:demo": "npm run data:sync -- --include-synthetic && npm run dev -w @transit/web"
+    "dev:demo": "npm run data:sync -- --include-synthetic && npm run dev -w @transit/web",
+    "data:hash": "node scripts/hash-status.mjs"
   },
   "devDependencies": {
     "json5": "^2.2.3",
