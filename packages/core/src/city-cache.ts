@@ -49,6 +49,23 @@ export function staleCacheEntries(urls: string[], options: CachePruneOptions): s
   })
 }
 
+/**
+ * 判定探测结果。
+ *
+ * 开发服务器的 SPA 回退会把不存在的路径返回 200 + text/html，
+ * 因此不能只看状态码：200 但不是 JSON，视为「未分发」。
+ */
+export function classifyProbe(
+  status: number,
+  contentType: string | null
+): 'ok' | 'missing' | 'unreachable' {
+  if (status >= 200 && status < 300) {
+    if (contentType && !contentType.includes('json')) return 'missing'
+    return 'ok'
+  }
+  return status >= 400 && status < 500 ? 'missing' : 'unreachable'
+}
+
 const HEX_SHA256 = /^[0-9a-f]{64}$/i
 
 export async function sha256Hex(data: ArrayBuffer | Uint8Array): Promise<string> {

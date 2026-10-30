@@ -54,6 +54,14 @@ apps/web/dist/cities/<id>/city.json      # manifest（构建期 import.meta.glob
 - 后台更新（stale-while-revalidate）：当前 `dataVersion` 变化后，用户重新下载即更新。
 - 缓存配额不足时的降级策略：目前失败只是返回 `false`，界面提示下载失败。
 
+## 探测与回退
+
+`probeCity()` 用 HEAD 探测，`classifyProbe(status, contentType)` 把
+「200 + 非 JSON」判为 `missing`。Vite 开发服务器对不存在的 `/cities/**` 会返回
+`index.html`（200 + text/html），只看状态码会把缺失城市误判为可用，随后
+`JSON.parse('<!doctype …')` 直接失败。现在缺失城市会显示「本地」标记并自动回退到
+可用城市；`npm run dev` 也会把本地受限/合成数据同步进来，避免出现空城。
+
 ## 测试
 
 | 文件 | 覆盖 |

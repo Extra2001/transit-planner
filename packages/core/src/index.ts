@@ -14,5 +14,11 @@ export { parseClock, formatClock, formatDuration, formatMargin } from './time'
 export { validateNetworkData, migrateNetworkData } from './schema'
 export type { NetworkInput } from './schema'
 export type { CityManifest, License, LicenseRedistribution, CityProvenance } from './city'
-export { parseCacheEntry, staleCacheEntries, sha256Hex, verifyDataDigest } from './city-cache'
+export {
+  classifyProbe,
+  parseCacheEntry,
+  staleCacheEntries,
+  sha256Hex,
+  verifyDataDigest
+} from './city-cache'
 export type { CacheEntryInfo, CachePruneOptions } from './city-cache'

@@ -1,4 +1,5 @@
 import {
+  classifyProbe,
   createNetwork,
   staleCacheEntries,
   verifyDataDigest,
@@ -74,8 +75,7 @@ export type ProbeResult = 'ok' | 'missing' | 'unreachable'
 export async function probeCity(manifest: CityManifest): Promise<ProbeResult> {
   try {
     const res = await fetch(assetUrl(manifest.dataUrl, manifest.dataVersion), { method: 'HEAD' })
-    if (res.ok) return 'ok'
-    return res.status >= 400 && res.status < 500 ? 'missing' : 'unreachable'
+    return classifyProbe(res.status, res.headers.get('content-type'))
   } catch {
     return 'unreachable'
   }

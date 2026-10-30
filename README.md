@@ -55,8 +55,11 @@ npm run test:changchun
 ```bash
 npm install
 npm run build:data   # 从 research/raw 生成 cities/beijing/network.json + status.json
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5173（本地含北京、长春、合成示例三城）
 ```
+
+`npm run dev` 只在本机复制受限/合成数据，不改变公开构建；`npm run build` 仍然只产出
+许可允许再分发的城市。
 
 生产构建与本地预览：
 

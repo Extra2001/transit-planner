@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
+  classifyProbe,
   parseCacheEntry,
   sha256Hex,
   staleCacheEntries,
@@ -73,6 +74,24 @@ describe('离线缓存清理选择', () => {
   it('非城市数据条目删除', () => {
     const urls = ['https://example.test/assets/index.js?v=1']
     expect(staleCacheEntries(urls, opts)).toEqual(urls)
+  })
+})
+
+describe('探测结果判定', () => {
+  it('200 + JSON 才算可用', () => {
+    expect(classifyProbe(200, 'application/json')).toBe('ok')
+    expect(classifyProbe(200, 'application/json; charset=utf-8')).toBe('ok')
+  })
+
+  it('开发服务器 SPA 回退的 HTML 视为未分发', () => {
+    expect(classifyProbe(200, 'text/html')).toBe('missing')
+    expect(classifyProbe(200, 'text/html; charset=utf-8')).toBe('missing')
+  })
+
+  it('404 为未分发，5xx/无响应为暂不可达', () => {
+    expect(classifyProbe(404, null)).toBe('missing')
+    expect(classifyProbe(500, null)).toBe('unreachable')
+    expect(classifyProbe(0, null)).toBe('unreachable')
   })
 })
 

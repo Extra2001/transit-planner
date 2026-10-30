@@ -160,6 +160,10 @@ v1 的 `dayType`（0/1）保留在车次里。v2 增加：
 3. 受限城市本地开发用 `INCLUDE_RESTRICTED_DATA=1 npm run build:local`，产物不得公开部署。
 4. `provenance.synthetic: true` 的城市默认也不进发布，只在 `npm run dev` 或
    `--include-synthetic` 时出现。
+5. `npm run dev` 同时带 `--include-restricted`，因此本地三城可用；`build:local` 仍是
+   受限城市的本地生产构建方式。
+6. 探测城市数据时看 `content-type`：开发服务器的 SPA 回退会返回 200 + HTML，
+   必须视为「未分发」，否则会把 index.html 当 JSON 解析。
 
 ## 当前状态（本轮重构后）
 
