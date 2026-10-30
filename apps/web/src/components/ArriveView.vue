@@ -157,6 +157,16 @@ const comparison = computed(() => {
   }
 })
 
+const transferCount = computed(() => c.value?.itinerary.transfers.length ?? 0)
+const walkText = computed(() => {
+  const cand = c.value
+  if (!cand) return ''
+  const walk = cand.itinerary.legs
+    .filter((l) => l.type === 'walk')
+    .reduce((sum, l) => sum + (l.type === 'walk' ? l.seconds : 0), 0)
+  return minutes(walk)
+})
+
 const slackText = computed(() => {
   const cand = c.value
   if (!cand) return ''
@@ -174,8 +184,9 @@ const slackText = computed(() => {
           <span class="nextday">出门</span>
         </div>
         <div class="summary-sub">
-          {{ clock(c.arrivalDoor) }} 到达 · 全程 {{ formatDuration(c.duration) }} ·
-          {{ minutes(c.platformWait + c.transferWait) }} 站台等待 · 余量 {{ minutes(c.slack) }}
+          {{ clock(c.arrivalDoor) }} 到达 · 全程 {{ formatDuration(c.duration) }} · 换乘
+          {{ transferCount }} 次 · 步行 {{ walkText }} · 等待
+          {{ minutes(c.platformWait + c.transferWait) }} · 余量 {{ minutes(c.slack) }}
         </div>
       </div>
       <div class="summary-badge" :class="result.risk">{{ riskLabel }}</div>
@@ -184,7 +195,7 @@ const slackText = computed(() => {
     <div class="advice" :class="result.risk === 'risky' ? 'advice-muted' : 'advice-good'">
       <strong>建议 {{ clock(result.recommended!.doorExit) }} 出门</strong>
       <span>
-        最晚 {{ clock(latest!.doorExit) }}（压线），建议窗口
+        最晚 {{ clock(latest!.doorExit) }}{{ latest!.slack < 60 ? '（压线）' : '' }}，建议窗口
         {{ clock(window!.start) }}–{{ clock(window!.end) }}，按推荐时间到达余量 {{ slackText }}。
       </span>
     </div>
@@ -228,7 +239,7 @@ const slackText = computed(() => {
       </li>
     </ol>
 
-    <div v-if="result.riskNote" class="inline-warn">
+    <div v-if="result.riskNote && result.risk !== 'safe'" class="inline-warn">
       <p>{{ result.riskNote }}</p>
     </div>
     <p class="plan-foot">
