@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<!-- <meta charset="utf-8"> -->
+
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+	
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="format-detection" content="telephone=no">
+	<title>北京公共数据开放平台-开放目录</title>
+	
+	
+	<script type="text/javascript" src="../../jsjiekou/jquery-1.10.1.min.js"></script>
+	<script type="text/javascript" src="../../jsjiekou/jquery.blockui.min.js"></script>
+	<script type="text/javascript" src="../../jsjiekou/base64.min.js"></script>
+	<script type="text/javascript" src="../../jsjiekou/searchadd_jigou20230626.js"></script>
+	<script type="text/javascript" src="../../jsjiekou/getcountadd.js"></script>
+
+	
+	<link href="../../cssjiekou/style_20181224.css" type="text/css" rel="stylesheet">
+	<link rel="stylesheet" href="../../cssjiekou/searchadd_1_1.css">
+	<link rel="stylesheet" href="../../cssjiekou/top20230626.css">
+	<link href="../../css2023/base.css" type="text/css" rel="stylesheet" />
+	<link href="../../css2023/subcon.css" type="text/css" rel="stylesheet" />
+</head>
+
+<script type="text/javascript" src="../../js/new1/jquery-1.12.4.min.js"></script>
+<div class="header" style="background: #ffffff;">
+      <div class="top row">
+        <div class="logo">
+          <a href="../../index.htm" class="logo_link1"><img src="../../images/new1/logo_01.png"></a>
+        </div>
+        <div class="top_right">
+          <div class="top_right_info">
+            <ul class="top1" style="float:right;padding:3px 0 0 0">
+            </ul>
+            <ul class="top2">
+              <li><a href="/cms/web/bjdata/sso/ssoLogin.jsp">登录</a></li>
+             
+            </ul>
+
+          </div>
+          <div class="search" style="
+    padding-top: inherit;
+">
+
+            <form name="dataForm6" target="_blank" accept-charset="utf-8" >
+				<input name="sit.id" value="3" type ="hidden">
+				<input class="notxt" value="搜索" name="query" type="text" id="keywords" onFocus="if(value==defaultValue){value='';}" onBlur="if(!value){value=defaultValue;}"
+				 onclick="if(this.value=='站内搜索'){this.value='';this.form.keywords.style.color='#3c98cc'}" id="bt1" onclick="_vaq.push(['trackSiteSearch', '京津冀', 'search', '1']); ">
+				<input class="notxt1" name="Submit" type="button" data-href="../../gjss/index.htm" onclick="jumpgjss(this)" value="数据检索" />
+             
+
+            </form>
+
+<script type="text/javascript">
+
+            function SubmitSearchForm() {
+
+                document.dataForm6.action = "/cms/web/search/index.jsp";
+                document.dataForm6.method = "post";
+                document.dataForm6.submit();
+                return false
+            }
+          </script>
+             
+            <a onclick="return SubmitSearchForm()">全站检索</a>
+            
+<script>
+              function jumpgjss(e) {
+                var url = $(e).attr('data-href');
+                var keyword = $('.search input.notxt').val();
+                var defaultValue = $('.search input.notxt').prop('defaultValue');
+                var urlData = '';
+                if (keyword && keyword != defaultValue) {
+                  urlData = '?' + keyword;
+                }
+                window.open(url + urlData, '_self');
+              }
+              
+            </script>			
+          </div>
+
+        </div>
+
+        <div class="mob_nav_btn only_mob" onclick="toggleOnOff(this,'.mobile-header')"></div>
+        <!-- 移动端主导航 -->
+        <section class="mobile-header only_mob">
+          <div class="mob_links on">
+            <ul class="top2">
+              <li><a href="/cms/web/bjdata/sso/ssoLogin.jsp">登录</a></li>
+            </ul>
+          </div>
+          <div class="mobile-nav">
+            <ul>
+              <li><a href="../../index.htm">首页</a></li>
+            <li><a href="index.htm">开放数据</a><strong>+</strong>
+              <dl class="mobile_subNav">
+				<dd><a href="index.htm">开放公共数据</a></dd>
+				<dd><a href="../wnkfsj/index.htm">往年开放数据</a></dd>
+				<dd><a href="../hcsjj/index.htm">合成开放数据</a></dd>
+                <dd><a href="../qlsjmlqd/index.htm">公共数据目录</a></dd>
+				<dd><a href="../../docs/guidang.pdf">历史归档目录</a></dd>
+              </dl>
+            </li>
+			<li><a class="dataRegist" href="#" >数据登记</a></li>   
+            <li><a href="https://www.bjzhengxin.com.cn/index">授权运营</a></li>
+			<li><a href="../../jkfb/index.htm">开放计划</a></li>
+			<li><a href="https://dibj.cn/" target="_blank">数据专题</a><strong>+</strong>
+				<dl class="mobile_subNav">
+					<dd><a class="szbjcxzx" href="https://dibj.cn/" target="_blank">数智北京创新中心</a></dd>
+					<dd><a href="../../jjjxtsjkfzt/index.htm">开放京津冀</a></dd>
+					<dd><a href="../dmtsjzq/index.htm">多模态数据专区</a></dd>
+					<dd><a href="../../appyy/index.htm">应用专区</a></dd>							
+				</dl>			
+			</li>
+            <li><a href="../../xydt/index.htm">政策动态</a><strong>+</strong>
+				<dl class="mobile_subNav">
+					<dd><a href="../../xydt/zcfgsjkf/index.htm">数据开放</a></dd>					
+					<dd><a href="../../sjkfzxfw/index.htm">标准指南</a></dd>
+					<dd><a href="../../xydt/ljhd/index.htm">北京开放</a></dd>
+					<dd><a href="../../xydt/qtss/index.htm">国家省市</a></dd>					
+				</dl>
+			</li>
+			<li><a href="../../hdfk/index.htm">互动反馈</a>			
+			</li>   
+            </ul>
+            <div class="   gp-m-search" id="gp-search5">
+              <div class="mob_search"  >
+
+                <form name="dataForm" target="_blank" accept-charset="utf-8" >
+                  <input name="sit.id" value="3" type="hidden">
+                  <input class="notxt" value="搜索" name="query" type="text" id="keywords2"
+                    onFocus="if(value==defaultValue){value='';}" onBlur="if(!value){value=defaultValue;}"
+                    onclick="if(this.value=='站内搜索'){this.value='';this.form.keywords.style.color='#3c98cc'}" id="bt1"
+                    onclick="_vaq.push(['trackSiteSearch', '京津冀', 'search', '1']); ">
+                  <input class="notxt1" name="Submit" type="button" data-href="../../gjss/index.htm" onclick="jumpgjss2(this)" value="数据检索" />  
+                </form>
+
+
+<script type="text/javascript">
+
+            function SubmitSearchForm() {
+
+                document.dataForm6.action = "/cms/web/search/index.jsp";
+                document.dataForm6.method = "post";
+                document.dataForm6.submit();
+                return false
+
+            }
+          </script>
+                
+                <a class="serBtngj" onclick="return SubmitSearchForm()">全站检索</a>
+
+                <script>
+                  function jumpgjss2(e) {
+                    var url = $(e).attr('data-href');
+                    var keyword = $('.mob_search input.notxt').val();
+                    var defaultValue = $('.mob_search input.notxt').prop('defaultValue');
+                    var urlData = '';
+                    if (keyword && keyword != defaultValue) {
+                      urlData = '?' + keyword;
+                    }
+                    window.open(url + urlData, '_self');
+                  }
+                </script>				
+              </div>
+
+
+               
+            </div>
+          </div>
+        </section>
+        <!-- 移动端主导航 -->
+
+      </div>
+      <div class="nav">
+        <ul id="nav" class="row">
+              <li><a href="../../index.htm">首页</a></li>
+              <li><a href="index.htm">开放数据</a>
+            <div class="subNav">
+				<dl>
+					<dd><a href="index.htm">开放公共数据</a></dd>
+					<dd><a href="../wnkfsj/index.htm">往年开放数据</a></dd>
+					<dd><a href="../hcsjj/index.htm">合成开放数据</a></dd>
+                    <dd><a href="../qlsjmlqd/index.htm">公共数据目录</a></dd>
+					<dd><a href="../../docs/guidang.pdf">历史归档目录</a></dd>				
+                </dl>
+            </div>				
+              </li>
+			<li><a class="dataRegist" href="#" >数据登记</a></li>   
+            <li><a href="https://www.bjzhengxin.com.cn/index">授权运营</a></li>			  
+            <li><a href="../../jkfb/index.htm">开放计划</a>           
+			</li>
+			<li><a href="https://dibj.cn/" target="_blank">数据专题</a>
+            <div class="subNav">
+				<dl>
+					<dd><a class="szbjcxzx" href="https://dibj.cn/" target="_blank">数智北京创新中心</a></dd>
+					<dd><a href="../../jjjxtsjkfzt/index.htm">开放京津冀</a></dd>
+					<dd><a href="../dmtsjzq/index.htm">多模态数据专区</a></dd>	
+					<dd><a href="../../appyy/index.htm">应用专区</a></dd>						
+                </dl>
+            </div>
+			</li>
+              <li><a href="../../xydt/index.htm">政策动态</a>
+            <div class="subNav">
+				<dl>
+					<dd><a href="../../xydt/zcfgsjkf/index.htm">数据开放</a></dd>					
+					<dd><a href="../../sjkfzxfw/index.htm">标准指南</a></dd>
+					<dd><a href="../../xydt/ljhd/index.htm">北京开放</a></dd>
+					<dd><a href="../../xydt/qtss/index.htm">国家省市</a></dd>					
+                </dl>
+            </div>
+			</li>
+			<li><a href="../../hdfk/index.htm">互动反馈</a></li>   
+        </ul>
+      </div>
+    </div>
+    <script src="../../6.13.1/QDTracker.umd.js"></script>
+<script>
+    // 获取URL参数
+    function getQueryParam(key) {
+        var search = window.location.search.substring(1);
+        if (!search) return null;
+        var pairs = search.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            var paramKey = decodeURIComponent(pair[0].replace(/\+/g, ' '));
+            if (paramKey === key) {
+                var paramValue = pair[1] ? decodeURIComponent(pair[1].replace(/\+/g, ' ')) : '';
+                return paramValue;
+            }
+        }
+        return null;
+    }
+    
+    // 从 sessionStorage 获取参数
+    function getSessionParam(key) {
+        var config = sessionStorage.getItem('jt_tracker_config');
+        if (config) {
+            try {
+                return JSON.parse(config)[key];
+            } catch (e) {
+                console.error('解析 tracker 配置失败:', e);
+            }
+        }
+        return null;
+    }
+
+    // 保存参数到 sessionStorage
+    function saveTrackerParams(source, userid, itemCode) {
+        if (source) {
+            sessionStorage.setItem('jt_tracker_config', JSON.stringify({
+                jtSource: source,
+                jtUserid: userid,
+                jtItemCode: itemCode
+            }));
+        }
+    }
+
+    // 获取参数（优先 URL，其次 sessionStorage）
+    var jtSource = getQueryParam('jtSource') || getSessionParam('jtSource');
+    var jtUserid = getQueryParam('jtUserid') || getSessionParam('jtUserid');
+    var jtItemCode = getQueryParam('jtItemCode') || getSessionParam('jtItemCode');
+
+    // 如果 URL 有参数，更新 sessionStorage
+    if (getQueryParam('jtSource')) {
+        saveTrackerParams(jtSource, jtUserid, jtItemCode);
+    }
+
+    if (jtSource) {
+        // 初始化
+        var qdtracker = window.QDTracker.init({
+            appkey: '0WEB06V5CJM3JHZJ', //必填，非固定值，详见附录A
+            tid: '', // 固定值：传空字符串
+            options: {
+                encrypt_mode: 'close', //固定值：close
+                enable_compression: false, // 固定值：false
+                track_interval: 0, // 固定值：0
+                batch_max_time: 1, //固定值：1
+                url: 'https://event.jt.beijing.gov.cn', //固定值：https://event.jt.beijing.gov.cn
+                preventAutoTrack: false, // 固定值：false
+                pagestay: false, // 固定值：false
+    
+                iframeEnable: false //固定值：false
+            },
+            singlePage: false // 默认关闭
+        });
+        // 设置SDK通用数据
+        qdtracker.setCommonData(
+            {
+                source: jtSource //各端标识：微信：wx，支付宝：zfb，百度：bd，京通APP：jtapp
+            },
+        )
+        var setAccountInfo = { diy_id: {} }
+        switch (jtSource) {
+            case 'wx':
+                setAccountInfo.wx_unionid = jtUserid
+                break;
+            case 'zfb':
+                setAccountInfo.ali_unionid = jtUserid
+                break;
+            case 'bd':
+                setAccountInfo.baidu_unionid = jtUserid
+                break;
+            case 'jtapp':
+                setAccountInfo.diy_id.jtapp_userid = jtUserid
+                break;
+            default:
+                break;
+        }
+        if(localStorage.getItem('inLogin')){
+            try {
+                var inLogin = JSON.parse(localStorage.getItem('inLogin'))
+                switch (inLogin.type) {
+                    case 0:
+                        setAccountInfo.business_id = inLogin.uniqueId
+                        break;
+                    case 3:
+                        setAccountInfo.diy_id.legal_entities_uid = inLogin.uid
+                        break;
+                    default:
+                        break;
+                }
+            } catch (e) {
+                console.error('解析 localStorage inLogin 数据失败:', e)
+            }
+        }
+        qdtracker.setAccountInfo(setAccountInfo)
+        
+        $(function() {
+            $('.mobile-nav ul li').eq(1).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "2_按钮_开放数据", 
+                    step_value: ""
+                });
+            })
+            $('.mobile-nav ul li').eq(2).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "3_按钮_数据登记", 
+                    step_value: ""
+                });
+            })
+            $('.mobile-nav ul li').eq(3).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "4_按钮_授权运营", 
+                    step_value: ""
+                });
+            })
+            $('.mobile-nav ul li').eq(4).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "5_按钮_开放计划", 
+                    step_value: ""
+                });
+            })
+            $('.mobile-nav ul li').eq(5).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "6_按钮_数据专题", 
+                    step_value: ""
+                });
+            })
+            $('.mobile-nav ul li').eq(6).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "7_页面_政策动态", 
+                    step_value: ""
+                });
+            })
+            $('.mobile-nav ul li').eq(7).on('click', function(){
+                qdtracker.track(jtItemCode, {
+                    step_name: "8_页面_互动反馈", 
+                    step_value: ""
+                });
+            })
+        
+        });
+            
+    }
+</script>
+
+
+
+<article class="wrap_content row">
+	<div class="wrap_con">
+
+
+		<!-- 		<div class="wrap_con02">
+			<div class="ser" style="margin-top: 0px; padding: 0px 0px;">
+				<form class="rf" name="dataForm" action="search.jsp" method="post" onsubmit="return false;">
+
+					<div class="list-box" id="lbx">
+						<input type="text" class="text" id="query" name="query" onKeyup="getContent(this);" 
+						onfocus="getContent(this);" placeholder="请输入关键词" autocomplete="off" style="width:780px;"/>
+						<div id="append" style="width:780px;"></div>
+					</div>
+					<input name="Submit" type="button" class="btn"  onclick="Search.search();">
+					<select name="indexID" id="indexID" style="display:none;">
+						<option value="">选择站点</option>
+					</select>
+					
+					
+					
+					
+					
+				</form>
+			</div>
+		</div> -->
+		<!-- 新加开始 -->
+		<div class="wrap_con01_01" id="channelSort" style="display: block;">
+			<div class="f_xinjia01">
+				<div class="f_xinjiaTitle" onclick="cityClick()">
+					<h2>市级单位</h2><strong></strong>
+				</div>
+				<script>
+					var cityClick = function () {
+						var doc = document.getElementById('city');
+						var style = doc.style.display;
+						if ('block' == style) {
+							doc.style.display = 'none';
+						} else {
+							doc.style.display = 'block';
+						}
+					}
+				</script>
+			<ul class="f_xinjiaList" id="city" style="display:none">
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市发展改革委</a>
+							<label><span id="市发展改革委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市教委</a>
+							<label><span id="市教委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市科委、中关村管委会</a>
+							<label><span id="市科委、中关村管委会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市经济和信息化局</a>
+							<label><span id="市经济和信息化局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市民族宗教委</a>
+							<label><span id="市民族宗教委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市公安局</a>
+							<label><span id="市公安局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市民政局</a>
+							<label><span id="市民政局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市司法局</a>
+							<label><span id="市司法局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市财政局</a>
+							<label><span id="市财政局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人力资源社会保障局</a>
+							<label><span id="市人力资源社会保障局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市规划自然资源委</a>
+							<label><span id="市规划自然资源委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市住房城乡建设委</a>
+							<label><span id="市住房城乡建设委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市生态环境局</a>
+							<label><span id="市生态环境局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市城市管理委</a>
+							<label><span id="市城市管理委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市交通委</a>
+							<label><span id="市交通委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市水务局</a>
+							<label><span id="市水务局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市商务局</a>
+							<label><span id="市商务局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市农业农村局</a>
+							<label><span id="市农业农村局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市卫生健康委</a>
+							<label><span id="市卫生健康委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市退役军人事务局</a>
+							<label><span id="市退役军人事务局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市应急局</a>
+							<label><span id="市应急局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市文化和旅游局</a>
+							<label><span id="市文化和旅游局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市市场监管局</a>
+							<label><span id="市市场监管局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市审计局</a>
+							<label><span id="市审计局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市广电局</a>
+							<label><span id="市广电局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市文物局</a>
+							<label><span id="市文物局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市体育局</a>
+							<label><span id="市体育局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市统计局</a>
+							<label><span id="市统计局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市园林绿化局</a>
+							<label><span id="市园林绿化局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市金融监管局</a>
+							<label><span id="市金融监管局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市政务和数据局</a>
+							<label><span id="市政务和数据局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人防办</a>
+							<label><span id="市人防办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市知识产权局</a>
+							<label><span id="市知识产权局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市医保局</a>
+							<label><span id="市医保局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市粮食和储备局</a>
+							<label><span id="市粮食和储备局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市中医局</a>
+							<label><span id="市中医局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市药监局</a>
+							<label><span id="市药监局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市地方志办</a>
+							<label><span id="市地方志办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市城管执法局</a>
+							<label><span id="市城管执法局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">住房公积金管理中心</a>
+							<label><span id="住房公积金管理中心">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市文化执法总队</a>
+							<label><span id="市文化执法总队">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市新闻出版局</a>
+							<label><span id="市新闻出版局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市电影局</a>
+							<label><span id="市电影局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市版权局</a>
+							<label><span id="市版权局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市政府侨办</a>
+							<label><span id="市政府侨办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市档案局</a>
+							<label><span id="市档案局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市保密局</a>
+							<label><span id="市保密局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市总工会</a>
+							<label><span id="市总工会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市委编办</a>
+							<label><span id="市委编办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市残联</a>
+							<label><span id="市残联">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市密码管理局</a>
+							<label><span id="市密码管理局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市消防救援总队</a>
+							<label><span id="市消防救援总队">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">国家税务总局北京市税务局</a>
+							<label><span id="国家税务总局北京市税务局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市地震局</a>
+							<label><span id="市地震局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市气象局</a>
+							<label><span id="市气象局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市烟草专卖局</a>
+							<label><span id="市烟草专卖局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京市国家安全局</a>
+							<label><span id="北京市国家安全局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市邮政管理局</a>
+							<label><span id="市邮政管理局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市排水集团</a>
+							<label><span id="市排水集团">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市电力公司</a>
+							<label><span id="市电力公司">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京铁塔公司</a>
+							<label><span id="北京铁塔公司">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市热力集团</a>
+							<label><span id="市热力集团">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北信基础设施公司</a>
+							<label><span id="北信基础设施公司">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市自来水集团</a>
+							<label><span id="市自来水集团">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市燃气集团</a>
+							<label><span id="市燃气集团">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">副中心管委会</a>
+							<label><span id="副中心管委会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市重大项目办</a>
+							<label><span id="市重大项目办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市公园管理中心</a>
+							<label><span id="市公园管理中心">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市投资促进服务中心</a>
+							<label><span id="市投资促进服务中心">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市台办</a>
+							<label><span id="市台办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人民检察院</a>
+							<label><span id="市人民检察院">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市高级人民法院</a>
+							<label><span id="市高级人民法院">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市侨联</a>
+							<label><span id="市侨联">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市妇联</a>
+							<label><span id="市妇联">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市科协</a>
+							<label><span id="市科协">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市社科联</a>
+							<label><span id="市社科联">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市友协</a>
+							<label><span id="市友协">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市监狱管理局</a>
+							<label><span id="市监狱管理局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">重点站区管委会</a>
+							<label><span id="重点站区管委会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人才工作局</a>
+							<label><span id="市人才工作局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市网信办</a>
+							<label><span id="市网信办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市通信管理局</a>
+							<label><span id="市通信管理局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国证券监督管理委员会北京监管局</a>
+							<label><span id="中国证券监督管理委员会北京监管局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国银行保险监督管理委员会北京监管局</a>
+							<label><span id="中国银行保险监督管理委员会北京监管局">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国人民银行营业管理部</a>
+							<label><span id="中国人民银行营业管理部">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">国家外汇管理局北京外汇管理部</a>
+							<label><span id="国家外汇管理局北京外汇管理部">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京市企业续贷受理中心</a>
+							<label><span id="北京市企业续贷受理中心">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中华人民共和国北京海关</a>
+							<label><span id="中华人民共和国北京海关">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市国资委</a>
+							<label><span id="市国资委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">临空区（大兴）管委会</a>
+							<label><span id="临空区（大兴）管委会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">天安门地区管委会</a>
+							<label><span id="天安门地区管委会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">团市委</a>
+							<label><span id="团市委">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京医疗保险协会</a>
+							<label><span id="北京医疗保险协会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市政府外办</a>
+							<label><span id="市政府外办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市信访办</a>
+							<label><span id="市信访办">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国国际贸易促进委员会北京市分会</a>
+							<label><span id="中国国际贸易促进委员会北京市分会">(0)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国计算机协会人工智能委员会</a>
+							<label><span id="中国计算机协会人工智能委员会">(0)</span></label>
+							
+						</div>	
+					</li>
+			
+			
+			
+
+			
+			
+			<!--
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >首都文明办</a>
+					<label><span id="首都文明办"></span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市发展改革委</a>
+					<label><span id="市发展改革委">(18)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市教委</a>
+					<label><span id="市教委">(80)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市科委</a>
+					<label><span id="市科委">(39)</span></label>
+					
+				</div>	
+			</li>
+			
+			
+			
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市经济信息化局</a>
+					<label><span id="市经济信息化局">(28)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市民族宗教委</a>
+					<label><span id="市民族宗教委">(11)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市公安局</a>
+					<label><span id="市公安局">(54)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市民政局</a>
+					<label><span id="市民政局">(28)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市司法局</a>
+					<label><span id="市司法局">(23)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市财政局</a>
+					<label><span id="市财政局">(31)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人力社保局</a>
+					<label><span id="市人力社保局">(23)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市规划自然资源委</a>
+					<label><span id="市规划自然资源委">(73)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市生态环境局</a>
+					<label><span id="市生态环境局">(16)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市住房城乡建设委</a>
+					<label><span id="市住房城乡建设委">(54)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市城市管理委</a>
+					<label><span id="市城市管理委">(20)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市交通委</a>
+					<label><span id="市交通委">(24)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市水务局</a>
+					<label><span id="市水务局">(31)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市农业农村局</a>
+					<label><span id="市农业农村局">(16)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市商务局</a>
+					<label><span id="市商务局">(27)</span></label>
+					
+				</div>	
+			</li>					
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市文化和旅游局</a>
+					<label><span id="市文化和旅游局">(98)</span></label>
+					
+				</div>	
+			</li>
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市卫生健康委</a>
+					<label><span id="市卫生健康委">(33)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市退役军人事务局</a>
+					<label><span id="市退役军人事务局">(5)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市应急管理局</a>
+					<label><span id="市应急管理局">(15)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市市场监督管理局</a>
+					<label><span id="市市场监督管理局">(41)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市药监局</a>
+					<label><span id="市药监局">(22)</span></label>
+					
+				</div>	
+			</li>					
+			
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市审计局</a>
+					<label><span id="市审计局">(4)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市政府外办</a>
+					<label><span id="市政府外办">(5)</span></label>
+					
+				</div>	
+			</li>
+			
+			
+			
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市国资委</a>
+					<label><span id="市国资委">(6)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市广播电视局</a>
+					<label><span id="市广播电视局">(31)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市文物局</a>
+					<label><span id="市文物局">(13)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市体育局</a>
+					<label><span id="市体育局">(16)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市统计局</a>
+					<label><span id="市统计局">(348)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市园林绿化局</a>
+					<label><span id="市园林绿化局">(46)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市地方金融监管局</a>
+					<label><span id="市地方金融监管局">(35)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人防办</a>
+					<label><span id="市人防办">(4)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市信访办</a>
+					<label><span id="市信访办">(2)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市知识产权局</a>
+					<label><span id="市知识产权局">(12)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市医保局</a>
+					<label><span id="市医保局">(5)</span></label>
+					
+				</div>	
+			</li>
+			
+		
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >市政府侨办</a>
+					<label><span id="市政府侨办"></span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市政务服务管理局</a>
+					<label><span id="市政务服务管理局">(3408)</span></label>
+					
+				</div>	
+			</li>
+			
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中关村管委会</a>
+					<label><span id="中关村管委会">(15)</span></label>
+					
+				</div>	
+			</li>
+
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">经济技术开发区管委会</a>
+					<label><span id="经济技术开发区管委会">(7)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">天安门地区管委会</a>
+					<label><span id="天安门地区管委会">(1)</span></label>
+					
+				</div>	
+			</li>
+			
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市粮食物资局</a>
+					<label><span id="市粮食物资局">(17)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市中医局</a>
+					<label><span id="市中医局">(3)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市城管执法局</a>
+					<label><span id="市城管执法局">(5)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市文化执法总队</a>
+					<label><span id="市文化执法总队">(17)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市重大项目办</a>
+					<label><span id="市重大项目办">(5)</span></label>
+					
+				</div>	
+			</li>	
+
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市公园管理中心</a>
+					<label><span id="市公园管理中心">(2)</span></label>
+					
+				</div>	
+			</li>	
+								
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市档案局</a>
+					<label><span id="市档案局">(5)</span></label>
+					
+				</div>	
+			</li>
+		
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市投资促进服务中心</a>
+					<label><span id="市投资促进服务中心">(2)</span></label>
+					
+				</div>	
+			</li>
+			
+			
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">住房公积金管理中心</a>
+					<label><span id="住房公积金管理中心">(5)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市地方志编委会</a>
+					<label><span id="市地方志编委会">(1)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市税务局</a>
+					<label><span id="市税务局">(6)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市气象局</a>
+					<label><span id="市气象局">(10)</span></label>
+					
+				</div>	
+			</li>					
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市台办</a>
+					<label><span id="市台办">(1)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京海关</a>
+					<label><span id="北京海关">(14)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市密码管理局</a>
+					<label><span id="市密码管理局">(4)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人民检察院</a>
+					<label><span id="市人民检察院">(4)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市高级人民法院</a>
+					<label><span id="市高级人民法院">(3)</span></label>
+					
+				</div>	
+			</li>
+
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市总工会</a>
+					<label><span id="市总工会">(3)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市侨联</a>
+					<label><span id="市侨联">(2)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">团市委</a>
+					<label><span id="团市委">(6)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市妇联</a>
+					<label><span id="市妇联">(6)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市残联</a>
+					<label><span id="市残联">(30)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市科协</a>
+					<label><span id="市科协">(10)</span></label>
+					
+				</div>	
+			</li>
+
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市社科联</a>
+					<label><span id="市社科联">(2)</span></label>
+					
+				</div>	
+			</li>
+
+
+
+		<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市友协</a>
+					<label><span id="市友协">(1)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京医疗保险协会</a>
+					<label><span id="北京医疗保险协会">(19)</span></label>
+					
+				</div>	
+			</li>   
+			
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市友协</a>
+					<label><span id="市友协">(1)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京医疗保险协会</a>
+					<label><span id="北京医疗保险协会">(19)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市监狱管理局</a>
+					<label><span id="市监狱管理局">(3)</span></label>
+					
+				</div>	
+			</li>					
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市电影局</a>
+					<label><span id="市电影局"></span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国证券监督管理委员会</a>
+					<label><span id="中国证券监督管理委员会">(14)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国银行保险监督管理委员会</a>
+					<label><span id="中国银行保险监督管理委员会">(15)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">中国人民银行营业管理部</a>
+					<label><span id="中国人民银行营业管理部">(3)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市烟草专卖局</a>
+					<label><span id="市烟草专卖局">(2)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市新闻出版局</a>
+					<label><span id="市新闻出版局">(2)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市消防救援总队</a>
+					<label><span id="市消防救援总队">(1)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市人才工作局</a>
+					<label><span id="市人才工作局">(1)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市互联网信息办公室</a>
+					<label><span id="市互联网信息办公室">(2)</span></label>
+					
+				</div>	
+			</li>
+								<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市地震局</a>
+					<label><span id="市地震局">(2)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市版权局</a>
+					<label><span id="市版权局">(2)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">国家外汇管理局北京外汇管理部</a>
+					<label><span id="国家外汇管理局北京外汇管理部">(2)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京市国家保密局</a>
+					<label><span id="北京市国家保密局">(1)</span></label>
+					
+				</div>	
+			</li>
+			<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">北京市国家安全局</a>
+					<label><span id="北京市国家安全局">(2)</span></label>
+					
+				</div>	
+			</li>
+		<!--	<li>
+				<div class="f_checkBox" style="width:190px;">
+					<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">市地方志办</a>
+					<label><span id="市地方志办">(2)</span></label>
+					
+				</div>	
+			</li>	  -->				
+					
+			
+			
+			
+			
+		</ul>
+
+				<br><br>
+				<div class="f_xinjiaTitle" onclick="areaClick()">
+					<h2>区级单位</h2><strong></strong>
+				</div>
+				<script>
+					var areaClick = function () {
+						var doc = document.getElementById('area');
+						var style = doc.style.display;
+						if ('block' == style) {
+							doc.style.display = 'none';
+						} else {
+							doc.style.display = 'block';
+						}
+					}
+				</script>
+				<ul class="f_xinjiaList" id="area" style="display:none">
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >东城区</a>
+							<label><span id="东城区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >西城区</a>
+							<label><span id="西城区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >朝阳区</a>
+							<label><span id="朝阳区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >海淀区</a>
+							<label><span id="海淀区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >丰台区</a>
+							<label><span id="丰台区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >石景山区</a>
+							<label><span id="石景山区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >门头沟区</a>
+							<label><span id="门头沟区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >房山区</a>
+							<label><span id="房山区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >通州区</a>
+							<label><span id="通州区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >顺义区</a>
+							<label><span id="顺义区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >昌平区</a>
+							<label><span id="昌平区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >大兴区</a>
+							<label><span id="大兴区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >怀柔区</a>
+							<label><span id="怀柔区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >平谷区</a>
+							<label><span id="平谷区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >密云区</a>
+							<label><span id="密云区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >延庆区</a>
+							<label><span id="延庆区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >经开区</a>
+							<label><span id="经开区"></span></label>
+							
+						</div>	
+					</li>
+					
+					
+					
+<!--
+					
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">西城区</a>
+							<label><span id="西城区">(47)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">朝阳区</a>
+							<label><span id="朝阳区">(70)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">海淀区</a>
+							<label><span id="海淀区">(49)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >丰台区</a>
+							<label><span id="丰台区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">石景山区</a>
+							<label><span id="石景山区">(41)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">门头沟区</a>
+							<label><span id="门头沟区">(47)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >房山区</a>
+							<label><span id="房山区"></span></label>
+							
+						</div>	
+					</li>
+
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >通州区</a>
+							<label><span id="通州区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">顺义区</a>
+							<label><span id="顺义区">(40)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >昌平区</a>
+							<label><span id="昌平区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >大兴区</a>
+							<label><span id="大兴区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >怀柔区</a>
+							<label><span id="怀柔区"></span></label>
+							
+						</div>	
+					</li>
+
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)">平谷区</a>
+							<label><span id="平谷区">(47)</span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >密云区</a>
+							<label><span id="密云区"></span></label>
+							
+						</div>	
+					</li>
+					<li>
+						<div class="f_checkBox" style="width:190px;">
+							<a href="javascript:void(0)" onclick="Search.searchByCondition(event)" >延庆区</a>
+							<label><span id="延庆区"></span></label>
+							
+						</div>	
+					</li> -->
+					
+					
+					
+					
+					
+				</ul>
+			</div>
+		</div>
+		<!-- 新加结束 -->
+
+
+
+
+		<div class="wrap_con04 rtShow" style="display: block;">
+				<div class="keytitle ser111">
+			<h2 style="color: #ca0101;">字段搜索</h2>
+			<div class="search search2">
+				<div class="gp-search gp-search1" id="gp-search1">
+					<div class="gp-ser">
+						<!-- <form name=""   accept-charset="utf-8" onsubmit="document.charset='utf-8';">-->
+						<!-- <input name="siteID" value="$curChannel.site.ID" type="hidden"> -->
+						<input class="notxt" value="" name="query" type="text" id="keywords"
+							onFocus="if(value==defaultValue){value='';}" onBlur="if(!value){value=defaultValue;}"
+							onclick="if(this.value==''){this.value='';this.form.keywords.style.color='#222'}">
+						<button class="notxt1 iconfont icon-search" name="Submit" type="submit" value="">
+							<!-- </form>-->
+					</div>
+				</div>
+			</div>
+		</div>
+			<!--<div class="keyword2"><span>关键词：<font style="font-size:14px; color:#CC0000; " class="keyword"></font></span></div>-->
+			<!--<div class="wrap_con03 rtShow"><span class="rt_con01">【共有0项查询结果，这是第0-0项。 】</span></div>-->
+			<div class="keycon">
+				<div class="tips1">
+					<p>共有<span>18573</span>个数据目录（含往年开放数据）</p>
+					<a href="javascript:;">开放数据目录下载</a>
+					<!--   <a href="javascript:;" class="alertitem" style="margin-left: 10px;">公共数据目录下载</a> -->
+					
+				</div>
+				<!--关键词搜索-->
+				<!--  <div class="keytitle">
+					<span>
+						<h2><strong>关键词搜索：</strong>&nbsp;&nbsp;</h2>
+						<div class="search search2">
+							<div class="gp-search gp-search1" id="gp-search1">
+								<div class="gp-ser">
+									
+										<input class="notxt" value="" name="query" type="text" id="keywords"
+											onFocus="if(value==defaultValue){value='';}"
+											onBlur="if(!value){value=defaultValue;}"
+											onclick="if(this.value==''){this.value='';this.form.keywords.style.color='#222'}">
+										<button class="notxt1 iconfont icon-search" name="Submit" type="submit"
+											value="">
+								
+								</div>
+							</div>
+						</div>
+					</span>
+				</div>  -->
+				<!--关键词搜索 end-->
+				<!-- 主题筛选 -->
+				<div class="keytitle">
+					<span>
+						<h2><strong>主题筛选：</strong>&nbsp;&nbsp;</h2>
+						<ul class="topic">
+                                                        <li><a href="javascript:;">全部</a></li>
+							<li><a href="javascript:;">经济建设</a></li>
+							<li><a href="javascript:;">信用服务</a></li>
+							<li><a href="javascript:;">财税金融</a></li>
+							<li><a href="javascript:;">旅游住宿</a></li>
+							<li><a href="javascript:;">交通服务</a></li>
+							<li><a href="javascript:;">餐饮美食</a></li>
+							<li><a href="javascript:;">医疗健康</a></li>
+							<li><a href="javascript:;">文体娱乐</a></li>
+							<li><a href="javascript:;">消费购物</a></li>
+							<li><a href="javascript:;">生活安全</a></li>
+							<li><a href="javascript:;">宗教信仰</a></li>
+							<li><a href="javascript:;">教育科研</a></li>
+							<li><a href="javascript:;">社会保障</a></li>
+							<li><a href="javascript:;">劳动就业</a></li>
+							<li><a href="javascript:;">生活服务</a></li>
+							<li><a href="javascript:;">房屋住宅</a></li>
+							<li><a href="javascript:;">政府机构与社会团体</a></li>
+							<li><a href="javascript:;">环境与资源保护</a></li>
+							<li><a href="javascript:;">企业服务</a></li>
+							<li><a href="javascript:;">农业农村</a></li>
+						</ul>
+				</div>
+				<!-- 主题筛选end -->
+				<!-- 格式筛选 -->
+				<!--   <div class="keytitle">
+					<span>
+						<h2><strong>格式筛选：</strong>&nbsp;&nbsp;</h2>
+						<ul class="formal">
+							<li><a href="javascript:;">全部</a></li>
+							<li><a href="javascript:;">XLS</a></li>
+							<li><a href="javascript:;">CSV</a></li>
+							<li><a href="javascript:;">ZIP</a></li>
+							<li><a href="javascript:;">PDF</a></li>
+							<li><a href="javascript:;">DOCX</a></li>
+						</ul>
+				</div>  -->
+				<!-- 格式筛选end -->
+				<!-- 开放方式start -->	
+				<div class="keytitle">
+					<span>
+						<h2><strong>开放方式：</strong>&nbsp;&nbsp;</h2>
+						<ul class="formal">
+							<li><a href="https://data.beijing.gov.cn/zyml/kfml/index.htm">无条件开放</a></li>
+							<!--  <li><a href="https://data.beijing.gov.cn/zyml/AIsj/index.htm">无条件开放(AI数据)</a></li>   -->
+							<!--  <li><a href="https://data.beijing.gov.cn/zyml/ytjkf/">有条件开放(AI数据)</a></li>   -->
+
+							<li><a href="https://www.bjzhengxin.com.cn/index">授权运营专区</a></li>
+						</ul>
+				</div>			
+				<!-- 开放方式end -->
+				<!--paixu kaishi-->
+				<div class="keytitle">
+					<span>
+						<h2><strong>排序：</strong>&nbsp;&nbsp;</h2>
+						<!--<a href="javascript:void(0);" onclick="Search.searchSort(0);">默认排序 </a>-->
+						<a href="javascript:void(0);" onclick="Search.searchSort(1);">更新时间</a>
+						<!--<a href="javascript:void(0);" onclick="Search.searchSort(2);">按主题</a>-->
+						<a href="javascript:void(0);" onclick="Search.searchSort(3);">按机构</a>
+						<a href="javascript:void(0);" onclick="Search.searchSort(4);">按下载量</a>
+						<!--  <a id="more" href="https://data.beijing.gov.cn/search/query/jigou_index.html"
+							style="float: right; margin: 0px 20px 0 0px; display:none" target="_blank">更多</a>   -->
+						<!-- <a href="javascript:void(0);" onclick="Search.searchSortM(0);" data-type="imgs_1"><img id="w_pre" src="../../images/pre.png"></a> &nbsp;&nbsp; -->
+						<!-- <a href="javascript:void(0);" onclick="Search.searchSortM(1);" data-type="imgs_2"><img id="w_next" src="../../images/w_next.png"></a> -->
+					</span>
+
+
+					<!-- <span>每页显示：&nbsp;&nbsp; -->
+					<!-- <a href="javascript:void(0);" onclick="Search.searchPage(10);">10</a>&nbsp; -->
+					<!-- <a href="javascript:void(0);" onclick="Search.searchPage(20);">20</a>&nbsp; -->
+					<!-- <a href="javascript:void(0);" onclick="Search.searchPage(30);">30</a>&nbsp; -->
+					<!-- </span> -->
+					<!--  <a href="javascript:;" class="down">
+						<i><img src="../../imagesjiekou/down20230626.png" alt=""></i>目录下载
+					</a>   -->
+
+				</div>
+				<!--paixu jieshu-->
+				<div class="keycon_tro_wrap">
+					<div class="keycon_tro_lf">
+						<ul class="con03">
+							
+						</ul>
+						<ul id="htmlContentTemplate"></ul>
+					<!--	<ul id="htmlContentTemplate" style="display: none;">
+							<li>
+								<div id="zhuti_img"><img src="{imgsrc}" width="48px">
+								</div>
+								<div>
+								<h2 style="font-size: 22px;"><a href="{url}" target="_blank">{title}</a></h2>
+								<p style="font-size: 16px;">{content}</p>
+								<br>
+								<h4 style="font-size: 14px;"><b>{unitName}</b> &nbsp;&nbsp;&nbsp;&nbsp;{pubDate}&nbsp;&nbsp;{downloadCount}&nbsp;&nbsp; {callCount}</h4>
+								
+								
+								</div>
+							</li>
+						</ul>
+						<ul id="htmlContentTemplate1" style="display:none;">
+							<li>
+							<div id="zhuti_img"><img src="{imgsrc}" width="48px">
+							</div>
+							<div>
+								<h2><a href="{url}" target="_blank">{title}</a></h2>
+								
+								<h4>{url} {downloadCount}&nbsp;&nbsp; {callCount}</h4>
+								<p>{content}</p>
+								
+								<h4>{unitName} &nbsp;&nbsp;&nbsp;&nbsp;{pubDate}&nbsp;&nbsp;{size}&nbsp;&nbsp;{score}&nbsp;&nbsp;&nbsp;&nbsp;
+								<span class="allword" title="在本文中检索的语句完全出现 并且 检索的全词匹配结果集数在5个以内，则显示全词匹配，最多显示5个" style="display: none;">全词匹配</span>
+								</h4>
+							</div>
+							</li>
+						</ul>   -->
+                         <div class="page"><span class="rn">找到5930项&nbsp;&nbsp;第1页/共593页 &nbsp;</span><a href="javascript:void(0);" onclick="Search.search(1);" class="pager num">首页</a>&nbsp;<span class="pager">上一页</span>&nbsp;<span class="pager">1</span>&nbsp; <a href="javascript:void(0);" onclick="Search.search(2);" class="pager num">2</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(3);" class="pager num">3</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(4);" class="pager num">4</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(5);" class="pager num">5</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(6);" class="pager num">6</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(7);" class="pager num">7</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(8);" class="pager num">8</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(9);" class="pager num">9</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(10);" class="pager num">10</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(2);" class="pager num">下一页</a>&nbsp;<a href="javascript:void(0);" onclick="Search.search(593);" class="pager num">末页</a></div>  
+
+					</div>
+
+					
+				</div>
+			</div>
+		</div>
+		<div class="wrap_con022 rtWaitting" style="display: none;"></div>
+	</div>
+</article>
+
+<!--底部更改开始 -->
+
+
+
+<div class="wrap_footer">
+
+	<div class="footer">
+  
+	  <div class="footer_box">
+		<div class="row box clearfix">
+		  <div class="footer_lt">
+  
+			<!--
+		<div class="jiucuo"> 
+		 
+		</div>   -->
+
+			
+			<div class="dzjgbox"><a href="http://bszs.conac.cn/sitename?method=show&amp;id=33F561320BC02473E053012819ACEECC" target="_blank"> <img src="../../images/logo_dzjg.png"></a></div>
+			
+			<script id='_jiucuo_' sitecode='1100000233' src="https://zfwzgl.www.gov.cn/exposure/jiucuo.js"></script>
+			
+			<!--<div id='_jiucuo_' class="dzjgbox"><img onclick="Link('1100000233')" style="margin:0;border:0;cursor: pointer;" src="https://zfwzgl.www.gov.cn/exposure/images/jiucuo.png?v=1100000233" src="../../images/jiucuo1.png">
+  
+			</div>   -->
+  
+  
+			<div class="logo12345">
+			 
+		  <img src="../../images/logo_12345.png" alt="12345" /> 
+	
+			</div>
+		  </div>
+		  <ul class="foot_info">
+			<li class="info1"><a href="https://data.beijing.gov.cn/gywm/wzjs/index.htm" title="关于我们"
+				target="_blank">关于我们</a>
+			  <a href="https://data.beijing.gov.cn/gywm/wzdt/index.htm" title="网站地图" target="_blank">网站地图</a>
+			  <a href="https://data.beijing.gov.cn/hdfk/index.htm" title="建议意见" target="_blank" class="mt24">建议意见</a>
+			  <a href="https://data.beijing.gov.cn/gywm/mzsm/index.htm" title="法律声明" target="_blank" class="mt24">法律声明</a>
+			</li>
+  
+  
+  
+  
+			<li class="info2">
+  
+
+			  <p style="color:#fff">邮箱：bjdata@jxj.beijing.gov.cn</p>
+			</li>
+			<li class="info3">
+			   <!--  <p class="ewm_wb"><img src="../../images/logo_gfwb.png" alt="官方微博"><br>
+				官方微博</p>  -->
+			  <p class="ewm_wx"><img src="../../images/logo_gfwx.png" alt="官方微信"><br>
+				官方微信</p>
+			</li>
+		  </ul>
+		</div>
+	  </div>
+	<div class="footer_txt">
+		<div class="row box clearfix">
+		  <span>主办单位：北京市政务服务和数据管理局</span>&nbsp;&nbsp;<span>承办单位：北京市大数据中心</span>
+　<span>网站标识码：1100000233&nbsp;&nbsp;  审图号: GS(2018)28号&nbsp;&nbsp;  <a href=" https://beian.miit.gov.cn">    京ICP备05060933号-4</a> &nbsp;&nbsp;
+<!--<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=110401200236">-->
+<img src="../../images/logo_jgab.png" width="20" height="20">京公网安备110401200236</span>
+		</div>
+
+	  </div>
+	</div>
+  </div>
+<script>function createHttpRequest(){if(window.XMLHttpRequest){return new XMLHttpRequest()}else{if(window.ActiveXObject){return new ActiveXObject("Microsoft.XMLHTTP")}}}function myPost(url,data,fn){var req=createHttpRequest();req.open("POST",url,true);req.setRequestHeader("Content-Type","application/x-www-form-urlencoded");req.onreadystatechange=function(){if(req.readyState==4&&(req.status==200||req.status==304)){if(fn){fn.call(this,req.responseText)}}};req.send(toParam(data))}function myGet(url,fn){var req=createHttpRequest();req.open("GET",url,true);req.onreadystatechange=function(){if(req.readyState==4&&req.status==200||req.status==304){if(fn){fn.call(this,JSON.parse(req.responseText))}}};req.send()}function toParam(data){var str="";if(data){var dk;for(var key in data){try{dk=filter034(data[key]);str+=key+"="+dk+"&"}catch(e){}}str=str.slice(0,-1)}return str}function filter034(param){try{if(param){if(param.toString().indexOf('&#034;')>-1){return param.toString().replaceAll('&#034;','')}}}catch(e){console.log(e)}return param}var Ajax={get:function(url,data,fn){url=url+"?"+toParam(data);myGet(url,fn)},post:function(url,data,fn){myPost(url,data,fn)}};var collect=function(data){try{var organId="920da68024a2458983e23eabe8da7f84";var organName="北京市公共数据开放平台";var siteId=encodeURI("3");var siteName=encodeURI("北京市公共数据开放平台");var channelId=encodeURI("e130235fc2d0440485fa5e4ae9a81089");var channelName=encodeURI("开放目录");var articleId=encodeURI("$curArticle.id");var articleName=encodeURI("$curArticle.name");var url=location.href;if(!organId||!organName){return}data.organId=organId;data.organName=organName;if(!siteId||!siteName){return}data.siteId=siteId;data.siteName=siteName;if(channelId&&channelName){data.channelId=channelId;data.channelName=channelName}if(articleId&&articleName){data.articleId=articleId;data.articleName=articleName}if(url){data.url=url}return data}catch(e){}};var req1=function(url,data){Ajax.post(url,data,function(re){})};var req2=function(url,data){Ajax.get(url,data,function(re){try{document.getElementById("visit_count").innerHTML=re.body.visitCount}catch(e){}})};var collect1=function(data){var url="https://cloud.gpowersoft.com/collector/visit/write";req1(url,data)};var collect2=function(data){var url="https://cloud.gpowersoft.com/collector/visit/total/article/get";var countData={};countData.organId=data.organId;countData.siteId=data.siteId;countData.articleId=data.articleId;req2(url,countData)};var visitTime;var ready123=function(){try{var data={};data.duration=10000;data=collect(data);collect1(data);collect2(data);visitTime=new Date().getTime()}catch(e){console.log(e.message)}};ready123();var flag=false;window.onbeforeunload=function(){try{flag=true;var data={};var now=new Date().getTime();if(visitTime&&now>visitTime){data.duration=now-visitTime;data=collect(data);collect1(data)}}catch(e){console.log(e.message)}};</script>
+<div class="aside_link">   
+    <ul>
+        <li><a href="../../hdfk/index.htm" class="item">
+                <img src="../../images2024/aside1.svg" alt="">
+                <p>需求申请</p>
+            </a></li>
+        <li><a href="../../hdfk/index.htm" class="item">
+                <img src="../../images2024/aside1.svg" alt="">
+                <p>权益申诉</p>
+            </a></li>
+        <li><a href="../../hdfk/index.htm" class="item">
+                <img src="../../images2024/aside1.svg" alt="">
+                <p>咨询建议</p>
+            </a></li>
+        <!--  <li><a href="../../grzx/index.htm" class="item">
+                <img src="../../images2024/aside1.svg" alt="">
+                <p>开放协议</p>
+            </a></li>    -->
+    </ul>
+</div>
+
+<script type="text/javascript" src="../../js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="../../js/new1/jquery.flexslider-min.js"></script>
+<script type="text/javascript" src="../../js2023/script.js"></script>
+
+<script type="text/javascript">
+	$(function () {
+		Nav('#nav');
+		snavWidth();
+		$('.serviceItem li').hover(function (e) {
+			$(this).addClass('current').siblings().removeClass('current');
+			$('.tab_con dl dd').eq($(this).index()).css('display', 'block').siblings().css('display', 'none');
+		});
+		$('.serviceItem2 li').hover(function (e) {
+			$(this).addClass('current').siblings().removeClass('current');
+			$('.tab_con2 dl dd').eq($(this).index()).css('display', 'block').siblings().css('display', 'none');
+		});
+
+		$(".flexslider").flexslider({
+			animation: 'slide',
+			pauseOnHover: true,
+			slideshowSpeed: 4000,
+			animationSpeed: 400,
+			touch: true
+		});
+		tab('#tab01');
+		ImgHeight();
+		$("#ess_ctr524_UserRegister_chkUnit").click(function () {
+			if ($("#ess_ctr524_UserRegister_chkUnit").get(0).checked) {
+				$('#ess_ctr524_UserRegister_divUnitInfo').css('display', 'block');
+			}
+			else {
+				$('#ess_ctr524_UserRegister_divUnitInfo').css('display', 'none');
+			}
+		});
+
+	});
+</script>
+<script language="javascript" type="text/javascript">
+	jQuery(function () {
+		jQuery.post('/cms/web/bjdata/inLogin.jsp', function (response) {
+			if ("404" == response.code) {
+				jQuery(".top2").html('<li><a href="/cms/web/bjdata/sso/ssoLogin.jsp">登录</a></li>');
+			} else {
+				html = '<li id="hello">';
+				html += '<a target="_top" title="点击此处进入用户资料管理" class="SkinObject" href="/cms/web/bjdata/loginDoSomething/user.jsp">' + response.result.fullName + '</a>，<i>您好!</i>';
+				html += '<a href="/cms/web/bjdata/loginDoSomething/user.jsp" target="_top">个人中心</a>';
+				html += '</li>';
+				html += '<li id="loginout"><a id="" class="SkinObject" href="/cms/web/bjdata/sso/logout.jsp">注销</a> </li>';
+				jQuery(".top2").html(html);
+			}
+		})
+	});
+</script>
+<script>
+	$(function () {
+		$("count").each((index, element) => {
+			let articleId = $(element).attr('data-id');
+			$.get('/stat/api/article?articleId=' + articleId + '&siteId=3', function (re) { $(element).text(re.body.count); });
+		});
+	});
+
+</script>
+<script type='text/javascript' src='../../js/g_list.js'></script>
+
+
+
+<script type="text/javascript">
+	Nav('#nav');
+</script>
+<script type="text/javascript">
+	$(function () {
+		$('.f_xinjiaTitle').click(function (e) {
+			$(this).toggleClass('hover');
+		});
+	})
+</script>
+<script type="text/javascript">
+	$(function () {
+		$('.f_xinjiaList li').click(function (e) {
+			$(this).addClass('current').siblings().removeClass('current');
+		});
+	})
+
+</script>
+<script>
+setTimeout(function () {
+  $(function () {
+    if ($('.f_checkBox').length > 0) {
+      $('.f_checkBox').each(function () {
+        if ($(this).find('span').length > 0 && $(this).find('span').text() == '(0)') {
+          $(this).parent().css('display', 'none');
+        }
+      });
+    }
+  });
+}, 1000);
+</script>
+<script async>
+	setTimeout(function() {
+	    $('.alertitem').unbind().bind('click', function() {
+	        alert('北京市全量公共数据目录已在数智北京创新中心开放');
+	    });
+	}, 100);
+</script>
+<script>
+    $(function() {
+        if (jtSource) {
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_页面_开放数据_历史归档目录",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_页面_开放数据_历史归档目录_文件查看",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_页面_开放数据_开放公共数据",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_页面_开放数据_开放公共数据_数据目录查看",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_页面_开放数据_开放公共数据_数据目录字段",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_开放数据目录下载",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_公共数据目录下载",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_市级单位筛选",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_区单位筛选",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_开放方式筛选",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_排序筛选",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });	
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_目录下载",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_数据查看",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+             qdtracker.track(jtItemCode, {
+                 step_name: "2_按钮_开放数据_开放公共数据_主题筛选",  //取值范围详细见3.1
+                 step_value: ""	//取值范围详细见3.1
+             });
+        }
+    });
+</script>
+<script type="text/javascript" src="../../js/new1/script.js"></script><script type='text/javascript' src='../../g_style/g_index.js'></script>
+</body></html>

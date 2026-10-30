@@ -1,0 +1,28 @@
+{
+  "name": "transit-planner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:data": "node scripts/build-data.mjs",
+    "dev": "npm run dev -w @transit/web",
+    "build": "npm run build -w @transit/web",
+    "preview": "npm run preview -w @transit/web",
+    "test": "npm run test -w @transit/core",
+    "typecheck": "npm run typecheck -w @transit/core && npm run typecheck -w @transit/web"
+  },
+  "devDependencies": {
+    "json5": "^2.2.3",
+    "puppeteer-core": "^25.16.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
