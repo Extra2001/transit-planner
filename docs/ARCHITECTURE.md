@@ -102,6 +102,15 @@ tools/
 `apps/web/public/cities/`，也才会随 npm 包/镜像分发。`unclear` 的城市 manifest 可以入库，
 但数据文件被 `.gitignore` 排除，且只能由开发者本地 `--include-restricted` 生成。
 
+## 时间规划（出发 / 到达）
+
+- `plan()` 负责「已到站台后最早到达」，`planAtSeconds()` 提供秒级入口。
+- `planArriveBy()`（`packages/core/src/arrive.ts`）在门到门模型上求最晚出门、
+  推荐出门窗口与三种目标的备选方案；算法与正确性论证见
+  [ARRIVE-BY.md](ARRIVE-BY.md)。
+- 门到门四段（家→站台、出站→目的地、安全余量、步行不确定性）与站台等待分开计算，
+  不重复计时；截止时间约束的是「出站后的目的地时刻」。
+
 ## 加载与缓存
 
 详见 [OFFLINE-CACHE.md](OFFLINE-CACHE.md)：按 `dataVersion` 分键、CacheFirst 运行时缓存、

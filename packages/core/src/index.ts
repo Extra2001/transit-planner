@@ -9,7 +9,22 @@ export {
   transferKey,
   DEFAULT_TRANSFER_SECONDS
 } from './network'
-export { plan, describeArrival } from './router'
+export { plan, planAtSeconds, describeArrival } from './router'
+export {
+  planArriveBy,
+  paretoFilter,
+  transferWaitSeconds,
+  walkSeconds,
+  evaluateDoorExit
+} from './arrive'
+export type {
+  ArriveByOptions,
+  ArriveByResult,
+  DoorModel,
+  JourneyCandidate,
+  DepartureWindow,
+  RiskLevel
+} from './arrive'
 export { parseClock, formatClock, formatDuration, formatMargin } from './time'
 export { validateNetworkData, migrateNetworkData } from './schema'
 export type { NetworkInput } from './schema'

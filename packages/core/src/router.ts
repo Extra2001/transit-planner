@@ -408,6 +408,14 @@ function itineraryWarnings(net: Network, legs: Leg[]): string[] {
 }
 
 export function plan(net: Network, options: PlanOptions): PlanResult {
+  return planAtSeconds(net, options, parseClock(options.time) * 60)
+}
+
+/**
+ * 从任意秒级时刻开始规划。arrive-by 搜索需要秒级精度（同一分钟内的边界判定），
+ * 因此单独暴露；`plan()` 只是把 HH:MM 转换成秒后调用它。
+ */
+export function planAtSeconds(net: Network, options: PlanOptions, startSec: number): PlanResult {
   const warnings: string[] = [...(net.data.meta.warnings ?? [])]
   const day = options.day === 'weekday' ? 0 : 1
   const fromIdx = net.stationIndex.get(options.from)
@@ -422,7 +430,6 @@ export function plan(net: Network, options: PlanOptions): PlanResult {
       warnings
     }
   }
-  const startSec = parseClock(options.time) * 60
   const minSave = options.minSaveSec ?? 90
   const overrides = buildOverrideMap(options.transferOverrides, net)
 
