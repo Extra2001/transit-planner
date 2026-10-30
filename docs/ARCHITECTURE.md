@@ -155,6 +155,8 @@ v1 的 `dayType`（0/1）保留在车次里。v2 增加：
 1. `npm run data:sync` 清空 `apps/web/public/cities/`，只复制 `redistribution: allowed` 的城市。
 2. `npm run verify:public` 断言构建产物里不含受限城市数据（CI 必跑）。
 3. 受限城市本地开发用 `INCLUDE_RESTRICTED_DATA=1 npm run build:local`，产物不得公开部署。
+4. `provenance.synthetic: true` 的城市默认也不进发布，只在 `npm run dev` 或
+   `--include-synthetic` 时出现。
 
 ## 当前状态（本轮重构后）
 
@@ -172,3 +174,4 @@ v1 的 `dayType`（0/1）保留在车次里。v2 增加：
 | 统一发布层 | 完成：`scripts/lib/publish-city.mjs` 写 network + status |
 | 发布闸门 | 完成：`data:sync` + `verify:public` |
 | 长春数据边界 | 完成：不入库、不进公开构建，本地 `build:local` |
+| 合成城市不进发布 | 完成：`provenance.synthetic` 默认跳过，仅 dev/`--include-synthetic` |

@@ -21,6 +21,8 @@ const citiesDir = path.join(root, 'cities')
 const target = path.join(root, 'apps/web/public/cities')
 const includeRestricted =
   process.argv.includes('--include-restricted') || process.env.INCLUDE_RESTRICTED_DATA === '1'
+const includeSynthetic =
+  process.argv.includes('--include-synthetic') || process.env.INCLUDE_SYNTHETIC_DATA === '1'
 
 function readManifests() {
   if (!fs.existsSync(citiesDir)) return []
@@ -59,9 +61,14 @@ const manifests = readManifests()
 const copied = []
 const skipped = []
 for (const entry of manifests) {
-  const allowed = entry.manifest?.license?.redistribution === 'allowed'
+  const manifest = entry.manifest ?? {}
+  const allowed = manifest?.license?.redistribution === 'allowed'
   if (!allowed && !includeRestricted) {
-    skipped.push({ id: entry.manifest?.id ?? entry.dir, reason: '许可未确认，未复制' })
+    skipped.push({ id: manifest?.id ?? entry.dir, reason: '许可未确认，未复制' })
+    continue
+  }
+  if (manifest?.provenance?.synthetic && !includeSynthetic) {
+    skipped.push({ id: manifest.id, reason: '合成演示数据，默认不进发布' })
     continue
   }
   const result = copyCity(entry)
@@ -69,7 +76,9 @@ for (const entry of manifests) {
   else skipped.push({ id: result.id, reason: result.reason })
 }
 
-console.log(`城市数据同步：${copied.length} 个已复制${includeRestricted ? '（含受限数据）' : ''}`)
+console.log(
+  `城市数据同步：${copied.length} 个已复制${includeRestricted ? '（含受限数据）' : ''}${includeSynthetic ? '（含合成演示）' : ''}`
+)
 if (copied.length) console.log(`  ✓ ${copied.join('、')}`)
 for (const s of skipped) console.log(`  – ${s.id}：${s.reason}`)
 if (skipped.length && !includeRestricted) {

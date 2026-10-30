@@ -65,7 +65,8 @@ cities/<id>/
 - `order`：城市选择器顺序，越小越靠前。
 - `dataVersion`：改了数据就改它，前端用它做缓存键，避免旧数据被 CacheFirst 命中。
 - `ui`：仅放展示文案，不放业务逻辑。
-- `provenance.synthetic: true` 的城市必须在 `notices` 里明确写「合成/演示」。
+- `provenance.synthetic: true` 的城市必须在 `notices` 里明确写「合成/演示」，且默认
+  不进发布构建（`npm run dev` 或 `data:sync --include-synthetic` 才复制）。
 
 ## 3. 数据格式
 

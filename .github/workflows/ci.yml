@@ -41,16 +41,27 @@ jobs:
 
       - name: Assert no restricted data in artifacts
         run: |
-          set -e
-          test -d apps/web/dist/cities
-          for dir in apps/web/dist/cities/*; do
-            name=$(basename "$dir")
-            if [ "$name" != "beijing" ]; then
-              echo "未授权城市数据进入了构建产物：$name"
-              exit 1
-            fi
-          done
-          echo "产物只包含允许分发的城市数据"
+          node -e '
+          const fs = require("node:fs")
+          const allowed = new Set()
+          for (const dir of fs.readdirSync("cities")) {
+            const file = `cities/${dir}/city.json`
+            if (!fs.existsSync(file)) continue
+            const manifest = JSON.parse(fs.readFileSync(file, "utf8"))
+            if (manifest.license?.redistribution === "allowed") allowed.add(manifest.id)
+          }
+          const published = fs.readdirSync("apps/web/dist/cities")
+          const extra = published.filter((id) => !allowed.has(id))
+          if (extra.length) {
+            console.error("未授权城市数据进入产物：", extra.join(", "))
+            process.exit(1)
+          }
+          if (!published.length) {
+            console.error("产物中没有城市数据")
+            process.exit(1)
+          }
+          console.log("产物城市：", published.join(", "))
+          '
 
       - name: Assert no secrets in tree
         run: |

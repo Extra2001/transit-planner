@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build:data": "node scripts/build-data.mjs",
-    "dev": "npm run data:sync && npm run dev -w @transit/web",
+    "dev": "npm run data:sync -- --include-synthetic && npm run dev -w @transit/web",
     "build": "npm run data:sync && npm run build -w @transit/web && npm run verify:public",
     "preview": "npm run preview -w @transit/web",
     "test": "npm run test -w @transit/core",
@@ -21,7 +21,8 @@
     "build:local": "npm run data:sync -- --include-restricted && npm run build -w @transit/web",
     "data:sync": "node scripts/sync-cities.mjs",
     "data:validate": "vitest run packages/core/test/data-validation.test.ts",
-    "verify:public": "node scripts/verify-public.mjs"
+    "verify:public": "node scripts/verify-public.mjs",
+    "dev:demo": "npm run data:sync -- --include-synthetic && npm run dev -w @transit/web"
   },
   "devDependencies": {
     "json5": "^2.2.3",
