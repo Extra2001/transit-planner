@@ -144,16 +144,19 @@ const comparison = computed(() => {
     e.platformWait + e.transferWait - (cand.platformWait + cand.transferWait)
   const waitE = e.platformWait + e.transferWait
   const waitC = cand.platformWait + cand.transferWait
+  const earlyBy = -arrivalDiff
   return {
     doorGain,
     arrivalDiff,
     waitSaved,
     text:
-      `最早方案 ${clock(e.doorExit)} 出门（等 ${minutes(waitE)}）${clock(e.arrivalDoor)} 到；` +
-      `当前方案 ${clock(cand.doorExit)} 出门（等 ${minutes(waitC)}）${clock(cand.arrivalDoor)} 到。` +
-      (arrivalDiff <= 0
-        ? `晚 ${minutes(doorGain)}出门，到达相同或更早。`
-        : `晚 ${minutes(doorGain)}出门，到达晚 ${minutes(arrivalDiff)}。`)
+      earlyBy > 600
+        ? `最早方案 ${clock(e.doorExit)} 出门会在 ${clock(e.arrivalDoor)} 到达，比截止时间早 ${minutes(earlyBy)}；不想早到就按建议时间出门。`
+        : `最早方案 ${clock(e.doorExit)} 出门（等 ${minutes(waitE)}）${clock(e.arrivalDoor)} 到；` +
+          `当前方案 ${clock(cand.doorExit)} 出门（等 ${minutes(waitC)}）${clock(cand.arrivalDoor)} 到。` +
+          (arrivalDiff <= 0
+            ? `晚 ${minutes(doorGain)}出门，到达相同或更早。`
+            : `晚 ${minutes(doorGain)}出门，到达晚 ${minutes(arrivalDiff)}。`)
   }
 })
 
