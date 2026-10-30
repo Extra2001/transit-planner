@@ -47,13 +47,20 @@ function statusPath(manifest: CityManifest): string {
   return manifest.dataUrl.replace(/[^/]+$/, 'status.json')
 }
 
-/** 探测数据文件是否存在，避免对未分发的城市发起整包请求。 */
-export async function probeCity(manifest: CityManifest): Promise<boolean> {
+export type ProbeResult = 'ok' | 'missing' | 'unreachable'
+
+/**
+ * 探测数据文件是否存在，避免对未分发的城市发起整包请求。
+ * unreachable 表示现在拿到不到响应（离线/网络故障），不代表城市未分发，
+ * 仍应尝试从 Service Worker 缓存读取。
+ */
+export async function probeCity(manifest: CityManifest): Promise<ProbeResult> {
   try {
     const res = await fetch(assetUrl(manifest.dataUrl, manifest.dataVersion), { method: 'HEAD' })
-    return res.ok
+    if (res.ok) return 'ok'
+    return res.status >= 400 && res.status < 500 ? 'missing' : 'unreachable'
   } catch {
-    return false
+    return 'unreachable'
   }
 }
 

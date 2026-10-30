@@ -29,7 +29,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /\/cities\/.*\.json$/,
+            urlPattern: /\/cities\/.*\.json(\?.*)?$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'transit-city-data',

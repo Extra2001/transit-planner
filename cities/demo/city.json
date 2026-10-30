@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "demo",
+  "order": 30,
+  "name": "合成示例轨道",
+  "shortName": "示例",
+  "dataUrl": "cities/demo/network.json",
+  "dataVersion": "2026-01-01",
+  "networkSchemaVersion": 2,
+  "license": {
+    "id": "CC0-1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "本项目人工合成",
+    "redistribution": "allowed",
+    "file": "data/licenses/demo.md"
+  },
+  "provenance": {
+    "source": "人工合成（tools/demo-city/generate.mjs）",
+    "capturedAt": "2026-01-01",
+    "validFrom": "2026-01-01",
+    "validUntil": null,
+    "official": false,
+    "realtime": false,
+    "synthetic": true,
+    "modified": "无"
+  },
+  "defaults": { "from": "甲站", "to": "己站", "time": "08:00" },
+  "notices": [
+    "合成数据，仅用于演示新增城市与测试，不对应任何真实线路或时刻。",
+    "非官方、非实时，不构成出行参考。"
+  ],
+  "ui": { "tripUnit": "班", "sourceLabel": "生成" }
+}

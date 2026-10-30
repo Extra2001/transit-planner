@@ -57,7 +57,7 @@ export const usePlannerStore = defineStore('planner', () => {
   const city = ref(initialId)
   const network = shallowRef<Network | null>(null)
   const cityStatus = ref<CityStatusFile | null>(null)
-  const availability = ref<Record<string, boolean>>({})
+  const availability = ref<Record<string, boolean | 'unknown'>>({})
   const offlineCached = ref(false)
   const ready = ref(false)
   const loading = ref(false)
@@ -162,8 +162,17 @@ export const usePlannerStore = defineStore('planner', () => {
     } catch (e) {
       ready.value = false
       network.value = null
+      if (e instanceof CityDataUnavailable && e.reason === 'missing') {
+        availability.value = { ...availability.value, [id]: false }
+      }
       loadError.value =
-        e instanceof CityDataUnavailable ? e.message : e instanceof Error ? e.message : String(e)
+        e instanceof CityDataUnavailable
+          ? e.message
+          : navigator.onLine === false
+            ? '当前离线，且该城市数据尚未缓存；联网后会自动加载。'
+            : e instanceof Error
+              ? e.message
+              : String(e)
     } finally {
       loading.value = false
     }
@@ -172,10 +181,12 @@ export const usePlannerStore = defineStore('planner', () => {
   async function init() {
     loading.value = true
     const probes = await Promise.all(cities.map(async (c) => [c.id, await probeCity(c)] as const))
-    availability.value = Object.fromEntries(probes)
+    availability.value = Object.fromEntries(
+      probes.map(([id, result]) => [id, result === 'ok' ? true : result === 'missing' ? false : 'unknown'])
+    )
     const manifest = activeManifest.value
     if (availability.value[manifest.id] === false) {
-      const fallback = cities.find((c) => availability.value[c.id])
+      const fallback = cities.find((c) => availability.value[c.id] !== false)
       if (fallback) {
         await activate(fallback.id)
         loadError.value = `${manifest.name}的数据未随本次发布分发，已切换到 ${fallback.shortName}。`
