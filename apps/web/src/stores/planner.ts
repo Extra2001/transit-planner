@@ -1,24 +1,19 @@
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
+import { plan, type DayType, type Network, type PlanResult, type TransferOverride } from '@transit/core'
+import { cities, defaultCity, getCity } from '../cities/registry'
 import {
-  createNetwork,
-  network as beijingNetwork,
-  plan,
-  type DayType,
-  type NetworkData,
-  type PlanResult,
-  type TransferOverride
-} from '@transit/core'
-import changchunData from '../data/changchun-network.json'
-import changchunStatus from '../data/changchun-status.json'
-
-type City = 'beijing' | 'changchun'
+  CityDataUnavailable,
+  cacheCityOffline,
+  isCityCached,
+  loadCityNetwork,
+  loadCityStatus,
+  probeCity,
+  type CityStatusFile
+} from '../cities/loader'
 
 const STORAGE_KEY = 'transit-planner.overrides.v1'
 const CITY_KEY = 'transit-planner.city.v1'
-
-const changchunNetwork = createNetwork(changchunData as unknown as NetworkData)
-const networks = { beijing: beijingNetwork, changchun: changchunNetwork }
 
 function defaultDay(): DayType {
   const d = new Date().getDay()
@@ -45,29 +40,31 @@ function loadOverrides(): TransferOverride[] {
   }
 }
 
-function defaultEndpoints(city: City): { from: string; to: string } {
-  if (city === 'beijing') return { from: '西直门', to: '东单' }
-  const names = changchunNetwork.stations
-  if (!names.length) return { from: '', to: '' }
-  const from = names.find((n) => n.includes('长春站')) ?? names[0]
-  const to = names.find((n) => n.includes('长影世纪城')) ?? names[names.length - 1]
-  return { from, to }
+function savedCityId(): string | null {
+  try {
+    return localStorage.getItem(CITY_KEY)
+  } catch {
+    return null
+  }
 }
 
 export const usePlannerStore = defineStore('planner', () => {
-  const changchunReady = changchunStatus.status === 'ready'
-  let savedCity: City = 'beijing'
-  try {
-    const raw = localStorage.getItem(CITY_KEY)
-    if (raw === 'changchun' && changchunReady) savedCity = 'changchun'
-  } catch {
-    /* ignore */
-  }
+  const initialId = (() => {
+    const saved = savedCityId()
+    return saved && getCity(saved) ? saved : defaultCity().id
+  })()
 
-  const city = ref<City>(savedCity)
-  const initial = defaultEndpoints(savedCity)
-  const from = ref(initial.from)
-  const to = ref(initial.to)
+  const city = ref(initialId)
+  const network = shallowRef<Network | null>(null)
+  const cityStatus = ref<CityStatusFile | null>(null)
+  const availability = ref<Record<string, boolean>>({})
+  const offlineCached = ref(false)
+  const ready = ref(false)
+  const loading = ref(false)
+  const loadError = ref('')
+
+  const from = ref('')
+  const to = ref('')
   const time = ref('08:00')
   const day = ref<DayType>(defaultDay())
   const speed = ref(1)
@@ -79,24 +76,31 @@ export const usePlannerStore = defineStore('planner', () => {
   const computing = ref(false)
   const overrides = ref<TransferOverride[]>(loadOverrides())
 
-  const activeNetwork = computed(() => networks[city.value])
-  const lines = computed(() => activeNetwork.value.lines)
-  const counts = computed(() => activeNetwork.value.data.meta.counts)
+  const activeManifest = computed(() => getCity(city.value) ?? defaultCity())
+  const cityOptions = computed(() =>
+    cities.map((c) => ({
+      id: c.id,
+      label: c.shortName,
+      available: availability.value[c.id] !== false
+    }))
+  )
+  const activeNetwork = computed(() => network.value)
+  const lines = computed(() => network.value?.lines ?? [])
+  const counts = computed(() => network.value?.data.meta.counts ?? {})
   const stations = computed(() =>
-    [...activeNetwork.value.stations].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
+    network.value
+      ? [...network.value.stations].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
+      : []
   )
   const reviewLines = computed(() => lines.value.filter((l) => l.status === 'review'))
   const supportedLines = computed(() => lines.value.filter((l) => l.status === 'supported'))
-  const cityLabel = computed(() => (city.value === 'beijing' ? '北京地铁' : '长春轨道交通'))
-  const cityOptions = computed(() =>
-    changchunReady
-      ? [
-          { id: 'beijing' as const, label: '北京' },
-          { id: 'changchun' as const, label: '长春' }
-        ]
-      : [{ id: 'beijing' as const, label: '北京' }]
-  )
-  const changchunSummary = computed(() => changchunStatus)
+  const cityLabel = computed(() => activeManifest.value.name)
+  const tripUnit = computed(() => {
+    const manifest = activeManifest.value
+    if (manifest.ui?.tripUnit) return manifest.ui.tripUnit
+    return cityStatus.value?.counts.fullLengthTrips !== undefined ? '条已确认区段' : '班'
+  })
+  const sourceLabel = computed(() => activeManifest.value.ui?.sourceLabel ?? '采集')
   const speedLabel = computed(() => {
     if (speed.value <= 0.9) return '偏慢'
     if (speed.value <= 0.98) return '略慢'
@@ -106,31 +110,90 @@ export const usePlannerStore = defineStore('planner', () => {
   })
 
   function linesAt(name: string) {
-    const net = activeNetwork.value
+    const net = network.value
+    if (!net) return []
     const idx = net.stationIndex.get(name)
     if (idx === undefined) return []
     return net.lineAt[idx].map((i) => net.lines[i])
   }
 
   function stationName(idx: number) {
-    return activeNetwork.value.stations[idx]
+    return network.value?.stations[idx] ?? ''
   }
 
-  function setCity(next: City) {
-    if (next === 'changchun' && !changchunReady) return
-    if (next === city.value) return
-    city.value = next
+  function persistCity(id: string) {
     try {
-      localStorage.setItem(CITY_KEY, next)
+      localStorage.setItem(CITY_KEY, id)
     } catch {
       /* ignore */
     }
-    const d = defaultEndpoints(next)
+  }
+
+  function applyDefaults() {
+    const d = activeManifest.value.defaults
     from.value = d.from
     to.value = d.to
+    time.value = d.time || '08:00'
     result.value = null
-    error.value = ''
-    run()
+  }
+
+  async function activate(id: string) {
+    const manifest = getCity(id)
+    if (!manifest) return
+    if (availability.value[id] === false) {
+      loadError.value = `${manifest.name}的数据未随本次发布分发（许可未确认），可查看项目文档在本地启用。`
+      return
+    }
+    loading.value = true
+    loadError.value = ''
+    try {
+      const [net, status] = await Promise.all([
+        loadCityNetwork(manifest),
+        loadCityStatus(manifest)
+      ])
+      network.value = net
+      cityStatus.value = status
+      city.value = id
+      persistCity(id)
+      applyDefaults()
+      ready.value = true
+      offlineCached.value = await isCityCached(manifest)
+      run()
+    } catch (e) {
+      ready.value = false
+      network.value = null
+      loadError.value =
+        e instanceof CityDataUnavailable ? e.message : e instanceof Error ? e.message : String(e)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function init() {
+    loading.value = true
+    const probes = await Promise.all(cities.map(async (c) => [c.id, await probeCity(c)] as const))
+    availability.value = Object.fromEntries(probes)
+    const manifest = activeManifest.value
+    if (availability.value[manifest.id] === false) {
+      const fallback = cities.find((c) => availability.value[c.id])
+      if (fallback) {
+        await activate(fallback.id)
+        loadError.value = `${manifest.name}的数据未随本次发布分发，已切换到 ${fallback.shortName}。`
+        return
+      }
+    }
+    await activate(manifest.id)
+  }
+
+  async function setCity(id: string) {
+    if (id === city.value && ready.value) return
+    await activate(id)
+  }
+
+  async function downloadOffline() {
+    const ok = await cacheCityOffline(activeManifest.value)
+    offlineCached.value = ok
+    return ok
   }
 
   function findOverride(station: string, fromLine: string, toLine: string) {
@@ -181,6 +244,8 @@ export const usePlannerStore = defineStore('planner', () => {
   }
 
   function run() {
+    const net = network.value
+    if (!net) return
     if (!from.value || !to.value) {
       error.value = '请选择出发站和目的站'
       result.value = null
@@ -189,7 +254,7 @@ export const usePlannerStore = defineStore('planner', () => {
     computing.value = true
     error.value = ''
     try {
-      result.value = plan(activeNetwork.value, {
+      result.value = plan(net, {
         from: from.value,
         to: to.value,
         time: time.value,
@@ -212,9 +277,15 @@ export const usePlannerStore = defineStore('planner', () => {
     city,
     cityLabel,
     cityOptions,
-    changchunReady,
-    changchunSummary,
+    activeManifest,
     activeNetwork,
+    cityStatus,
+    ready,
+    loading,
+    loadError,
+    offlineCached,
+    tripUnit,
+    sourceLabel,
     from,
     to,
     time,
@@ -239,6 +310,8 @@ export const usePlannerStore = defineStore('planner', () => {
     clearOverride,
     setCity,
     swap,
-    run
+    run,
+    init,
+    downloadOffline
   }
 })

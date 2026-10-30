@@ -1,8 +1,5 @@
 import type { NetworkData } from './types'
 import { createNetwork } from './network'
-import raw from './data/network.json'
-
-export const network = createNetwork(raw as unknown as NetworkData)
 
 export * from './types'
 export {
@@ -14,3 +11,6 @@ export {
 } from './network'
 export { plan, describeArrival } from './router'
 export { parseClock, formatClock, formatDuration, formatMargin } from './time'
+export { validateNetworkData, migrateNetworkData } from './schema'
+export type { NetworkInput } from './schema'
+export type { CityManifest, License, LicenseRedistribution, CityProvenance } from './city'

@@ -17,11 +17,13 @@ const editing = ref(false)
 const draft = ref(0)
 
 const net = computed(() => store.activeNetwork)
-const stationName = computed(() => net.value.stations[props.note.station])
-const fromLine = computed(() => net.value.lines[props.note.fromLine])
-const toLine = computed(() => net.value.lines[props.note.toLine])
+const stationName = computed(() => net.value?.stations[props.note.station] ?? '')
+const fromLine = computed(() => net.value?.lines[props.note.fromLine])
+const toLine = computed(() => net.value?.lines[props.note.toLine])
 const override = computed(() =>
-  store.findOverride(stationName.value, fromLine.value.id, toLine.value.id)
+  fromLine.value && toLine.value
+    ? store.findOverride(stationName.value, fromLine.value.id, toLine.value.id)
+    : undefined
 )
 
 const sourceLabel = computed(() => {
@@ -54,13 +56,14 @@ function startEdit() {
 }
 
 function save() {
-  if (!Number.isFinite(draft.value)) return
+  if (!Number.isFinite(draft.value) || !fromLine.value || !toLine.value) return
   draft.value = Math.max(0, Math.min(1800, Math.round(draft.value)))
   store.saveOverride(stationName.value, fromLine.value.id, toLine.value.id, draft.value)
   editing.value = false
 }
 
 function clear() {
+  if (!fromLine.value || !toLine.value) return
   store.clearOverride(stationName.value, fromLine.value.id, toLine.value.id)
   editing.value = false
 }

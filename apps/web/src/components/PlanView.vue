@@ -50,27 +50,27 @@ function clockWithDay(sec: number): string {
 }
 
 function lineName(idx: number): string {
-  return store.activeNetwork.lines[idx]?.name ?? ''
+  return store.activeNetwork?.lines[idx]?.name ?? ''
 }
 
 function lineShort(idx: number): string {
-  return store.activeNetwork.lines[idx]?.shortName ?? ''
+  return store.activeNetwork?.lines[idx]?.shortName ?? ''
 }
 
 function lineColor(idx: number): string {
-  return store.activeNetwork.lines[idx]?.color ?? '#666'
+  return store.activeNetwork?.lines[idx]?.color ?? '#666'
 }
 
 function lineTextColor(idx: number): string {
-  return store.activeNetwork.lines[idx]?.textColor ?? '#fff'
+  return store.activeNetwork?.lines[idx]?.textColor ?? '#fff'
 }
 
 function directionName(line: number, dir: number): string {
-  return store.activeNetwork.lines[line]?.directions[dir]?.name ?? ''
+  return store.activeNetwork?.lines[line]?.directions[dir]?.name ?? ''
 }
 
 function station(idx: number): string {
-  return store.activeNetwork.stations[idx] ?? ''
+  return store.activeNetwork?.stations[idx] ?? ''
 }
 
 function noteFor(leg: Leg) {

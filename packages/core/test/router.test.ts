@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { network, plan, getTransfer, buildOverrideMap, formatClock } from '../src/index'
+import fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { createNetwork, plan, getTransfer, buildOverrideMap, formatClock } from '../src/index'
+
+const beijingFile = fileURLToPath(new URL('../../../cities/beijing/network.json', import.meta.url))
+const network = createNetwork(JSON.parse(fs.readFileSync(beijingFile, 'utf8')))
 
 const base = {
   day: 'weekday' as const,

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 干净检出：没有 data/changchun/raw、没有受限城市数据，必须也能通过
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Data schema validation
+        run: npm run data:validate
+
+      - name: Build (with publish gate)
+        run: npm run build
+
+      - name: Assert no restricted data in artifacts
+        run: |
+          set -e
+          test -d apps/web/dist/cities
+          for dir in apps/web/dist/cities/*; do
+            name=$(basename "$dir")
+            if [ "$name" != "beijing" ]; then
+              echo "未授权城市数据进入了构建产物：$name"
+              exit 1
+            fi
+          done
+          echo "产物只包含允许分发的城市数据"
+
+      - name: Assert no secrets in tree
+        run: |
+          set -e
+          if git ls-files | grep -Ei '(\.env$|\.env\.|credentials|secret|\.pem$|id_rsa)'; then
+            echo "发现疑似凭证文件"
+            exit 1
+          fi
+          echo "未发现凭证文件"

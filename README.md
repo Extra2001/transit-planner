@@ -1,4 +1,4 @@
-# 逐班换乘 · 北京（可行性研究原型）
+# 逐班换乘 · 多城市轨道交通（可行性研究原型）
 
 基于**逐班计划时刻**的北京地铁换乘优化器：给定出发站、目的站、时间、步速与换乘安全余量，计算最早到达方案，并同时给出「保守步行」与「1.35× 冲刺」两套结果、赶车余量、错过后下一班与预计损失。
 
@@ -29,6 +29,10 @@
 - 17 号线：望京西未在班次中停靠
 
 ## 长春
+
+> 长春数据的再分发许可未确认，**默认不随仓库分发、不进公开构建**。本地可用
+> `INCLUDE_RESTRICTED_DATA=1 npm run build:local` 启用，公开站点只有北京。
+> 详见 [data/licenses/changchun.md](data/licenses/changchun.md)。
 
 已确认 E 出行 H5 的 table2 接口与字段：`startInterval` 是小时、`paramsList[].time` 是分钟。当前为 8 条线、142 个唯一车站（168 个线路-车站对）、4,943 条已确认区段；状态 `ready`。可用 `npm run changchun:status` 查看。
 
@@ -71,19 +75,29 @@ npm run typecheck
 ## 结构
 
 ```
-packages/core/          # 与框架无关的 TS：数据模型、时间依赖图、最早到达、换乘建议
+packages/core/          # 与框架无关的 TS：数据模型、时间依赖图、最早到达、换乘建议、schema 校验
   src/router.ts         # 时间依赖 Dijkstra（状态 = 车站 × 线路）
-  src/network.ts        # 车次/站点/换乘索引
-  src/data/network.json # 构建期生成的离线数据（3.41 MiB）
+  src/network.ts        # createNetwork(data)：车次/站点/换乘索引
+  src/schema.ts         # 运行时校验 + v1/v2 迁移
+cities/<id>/city.json   # 城市 manifest（来源、许可、默认起终点、提示）
+cities/<id>/network.json# 城市时刻数据，按许可决定是否入库
 apps/web/               # Vue 3 + Pinia + TypeScript + Vite PWA
-scripts/build-data.mjs  # 从原始时刻表生成 28 条线数据
-research/               # 调研报告与原始数据快照
+  src/cities/registry.ts# 构建期收集 manifest，新增城市无需改前端代码
+  src/cities/loader.ts  # 按需 fetch + 缓存 + 离线下载
+scripts/sync-cities.mjs # 只把允许再分发的城市数据同步进 public/
+scripts/build-data.mjs  # 北京适配器：原始时刻表 → cities/beijing/network.json
+tools/changchun-import/ # 长春适配器（采集/解析/重建/发布）
+research/               # 调研报告与原始材料快照
 ```
 
-- **纯前端**：没有后端；数据在构建期裁剪并随包发布，查询在浏览器内完成。
-- **全覆盖**：28 条线、425 站，原生可搜索车站选择器；线路覆盖/缺口/版本可在页面底部展开。
-- **PWA**：`vite-plugin-pwa` 预缓存全部静态资源，离线可重新打开并查询。
-- **实测性能**：全网单次查询（含两套方案与逐换乘分析）约 **3–26 ms**（Apple Silicon / Node 24，随换乘次数变化）；构建产物约 3.68 MB JS（gzip 1.14 MB），数据 3.41 MiB。
+- **纯前端**：没有后端；城市数据按需下载，查询在浏览器内完成。
+- **多城市**：城市由 `cities/*/city.json` 驱动，可选城市、默认起终点、免责声明都来自 manifest。
+- **按需加载**：首屏 JS 约 120 KB（gzip 46 KB），3.4 MB 北京数据在选中城市后才下载并缓存。
+- **许可闸门**：只有 `license.redistribution: allowed` 的数据进入公开构建，构建后自动检查产物。
+- **PWA**：静态资源预缓存；城市数据用 CacheFirst 运行时缓存，可在覆盖面板手动「下载离线数据」。
+- **实测性能**：全网单次查询（含两套方案与逐换乘分析）约 **3–26 ms**（Apple Silicon / Node 24，随换乘次数变化）。
+
+设计说明见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，风险清单见 [docs/RISKS.md](docs/RISKS.md)。
 
 ## 算法要点
 
@@ -97,11 +111,22 @@ research/               # 调研报告与原始数据快照
 
 ## 数据与许可
 
-- **代码**：MIT，见 [LICENSE](LICENSE)。
-- **时刻数据**：衍生自 [BoyInTheSun/beijing-subway-schedule](https://github.com/BoyInTheSun/beijing-subway-schedule)（CC BY-SA 4.0），其底层为北京地铁/京港地铁官网公布的车站逐班时刻表图片，经 OCR 与人工纠错。数据文件以 CC BY-SA 4.0 提供，见 [LICENSE-DATA](LICENSE-DATA)。
-- **换乘步行时间**：衍生自 [Mick235711/Beijing-Subway-Tools](https://github.com/Mick235711/Beijing-Subway-Tools) 的 `metadata.json5`（MIT），为爱好者整理/推算值。
-- **长春时刻**：来自用户授权/要求的 E 出行 H5 table2 低频采集；原始响应不随仓库分发，派生时刻表已接入 PWA；公开部署前仍需确认运营方使用条件。
-- 详见 [NOTICE.md](NOTICE.md)。
+分层许可，各城市独立，不可互相套用：
+
+| 内容 | 许可 | 分发 |
+| --- | --- | --- |
+| 代码（`packages/`、`apps/`、`scripts/`、`tools/`） | MIT，见 [LICENSE](LICENSE) | 允许 |
+| 北京时刻与换乘数据（`cities/beijing/network.json`） | CC BY-SA 4.0，见 [data/licenses/beijing.md](data/licenses/beijing.md) | 允许（须署名 + 相同许可） |
+| 长春时刻数据（`cities/changchun/`） | **未确认**，见 [data/licenses/changchun.md](data/licenses/changchun.md) | **不允许**，默认不随仓库、不进公开构建 |
+| 调研原始材料（`research/raw/`） | 多种，多为仅研究 | 见 [data/licenses/research-artifacts.md](data/licenses/research-artifacts.md) |
+
+- 北京时刻源自 [BoyInTheSun/beijing-subway-schedule](https://github.com/BoyInTheSun/beijing-subway-schedule)，底层为北京地铁/京港地铁官网公布的车站逐班时刻表图片，经 OCR 与人工纠错。
+- 换乘步行时间源自 [Mick235711/Beijing-Subway-Tools](https://github.com/Mick235711/Beijing-Subway-Tools)（MIT），为爱好者整理/推算值，非运营方实测。
+- 长春数据来自 E 出行 H5 `table2` 接口的低频本地采集，**未取得再分发授权**，因此只保留 manifest 与说明文档。
+- 「本项目禁止商用」之类的使用声明只约束本项目，不构成对任何数据的授权。
+
+详见 [NOTICE.md](NOTICE.md)、[docs/DATA-LICENSES.md](docs/DATA-LICENSES.md)。
+新增城市见 [docs/ADDING-A-CITY.md](docs/ADDING-A-CITY.md)，贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 已知限制
 

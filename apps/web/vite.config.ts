@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: '逐班换乘 · 北京',
+        name: '逐班换乘 · 多城市轨道交通',
         short_name: '逐班换乘',
-        description: '基于逐班计划时刻的北京地铁换乘与赶车建议（1/2/4/5 号线）',
+        description: '基于逐班计划时刻的城市轨道交通换乘与赶车建议（多城市，非官方、非实时）',
         theme_color: '#0f766e',
         background_color: '#f6f7f9',
         display: 'standalone',
@@ -24,7 +24,19 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,json,woff2}'],
-        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024
+        // 城市数据按需加载，不进预缓存，避免首屏下载全部城市时刻表
+        globIgnores: ['cities/**'],
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /\/cities\/.*\.json$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'transit-city-data',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 90 }
+            }
+          }
+        ]
       }
     })
   ],

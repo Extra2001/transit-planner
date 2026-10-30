@@ -29,6 +29,7 @@ watch(
 
 const linesOf = (name: string): LineInfo[] => {
   const net = store.activeNetwork
+  if (!net) return []
   const idx = net.stationIndex.get(name)
   if (idx === undefined) return []
   return net.lineAt[idx].map((i) => net.lines[i])

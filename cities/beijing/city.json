@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "beijing",
+  "order": 10,
+  "name": "北京地铁",
+  "shortName": "北京",
+  "dataUrl": "cities/beijing/network.json",
+  "dataVersion": "2026-01-13",
+  "networkSchemaVersion": 2,
+  "license": {
+    "id": "CC-BY-SA-4.0",
+    "url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "BoyInTheSun/beijing-subway-schedule（CC BY-SA 4.0）；换乘步行时间 Mick235711/Beijing-Subway-Tools（MIT）",
+    "redistribution": "allowed",
+    "file": "data/licenses/beijing.md"
+  },
+  "provenance": {
+    "source": "BoyInTheSun/beijing-subway-schedule train_schedule_all/schedule.json",
+    "capturedAt": "2026-01-13",
+    "validFrom": "2026-01-13",
+    "validUntil": null,
+    "official": false,
+    "realtime": false,
+    "synthetic": false,
+    "modified": "站名去线路后缀、剔除 6 号线通过不停车、时刻换算为服务日分钟、重排为紧凑 JSON；未合成缺失班次"
+  },
+  "defaults": { "from": "西直门", "to": "东单", "time": "08:00" },
+  "notices": [
+    "逐班计划时刻来自开源整理与运营方公布的站台时刻图，非实时。",
+    "换乘步行时间为爱好者估计值，不是运营方实测。",
+    "非官方项目，不构成出行保证。"
+  ]
+}

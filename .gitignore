@@ -7,3 +7,9 @@ dist/
 # 长春 E 出行原始响应与导入快照：仅本地开发；许可未确认，不随仓库分发
 data/changchun/raw/
 data/changchun/imported/
+
+# 城市数据：许可未确认的数据只在本地保留，不随仓库分发
+cities/changchun/network.json
+cities/changchun/status.json
+# 由 data:sync 生成的站点副本，不入库
+apps/web/public/cities/

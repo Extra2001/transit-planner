@@ -7,6 +7,8 @@ import type {
   Trip,
   TripStop
 } from './types'
+import type { NetworkInput } from './schema'
+import { migrateNetworkData } from './schema'
 
 export const DEFAULT_TRANSFER_SECONDS = 180
 
@@ -21,7 +23,8 @@ export interface TransferSelection {
   risk?: string
 }
 
-export function createNetwork(data: NetworkData): Network {
+export function createNetwork(input: NetworkInput): Network {
+  const data = migrateNetworkData(input)
   const stationIndex = new Map<string, number>()
   data.stations.forEach((name, i) => {
     if (stationIndex.has(name)) throw new Error(`站点重复：${name}`)

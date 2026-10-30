@@ -1,15 +1,12 @@
-时刻数据文件 packages/core/src/data/network.json 及其衍生数据
-按 Creative Commons Attribution-ShareAlike 4.0 International（CC BY-SA 4.0）提供。
+数据许可说明（索引）
 
-You are free to share and adapt the data, provided that you give appropriate
-credit, link to the license, and distribute your contributions under the same
-license.
+本仓库的数据按城市/来源分别许可，不再统一声明为 CC BY-SA 4.0。
 
-完整许可文本：https://creativecommons.org/licenses/by-sa/4.0/legalcode
+- 总览：data/licenses/README.md
+- 北京时刻数据（CC BY-SA 4.0）：data/licenses/beijing.md
+- 长春时刻数据（许可未确认，不分发）：data/licenses/changchun.md
+- 调研原始材料（多种，多为仅研究）：data/licenses/research-artifacts.md
+- 逐文件审计与历史影响：docs/DATA-LICENSES.md
 
-署名：
-- BoyInTheSun/beijing-subway-schedule
-  https://github.com/BoyInTheSun/beijing-subway-schedule
-- 底层来源：北京地铁、京港地铁官网公布的车站逐班到站时刻表图片，经 OCR 与人工纠错。
-
-修改说明：本项目导入北京 28 条线，统一站名（去除线路后缀），剔除 6 号线通过不停车记录，把时刻转换为服务日分钟数，并把逐班数据重排为紧凑 JSON；未合成缺失班次。
+代码许可见 LICENSE（MIT），不因数据许可而改变。
+「本项目禁止商用」等使用声明只约束本项目，不构成对任何数据的授权。

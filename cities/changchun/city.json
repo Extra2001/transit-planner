@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "changchun",
+  "order": 20,
+  "name": "长春轨道交通",
+  "shortName": "长春",
+  "dataUrl": "cities/changchun/network.json",
+  "dataVersion": "2026-10-30",
+  "networkSchemaVersion": 2,
+  "license": {
+    "id": "UNCONFIRMED",
+    "url": null,
+    "attribution": "长春 E 出行 H5 table2 接口（app.ccetravel.cn），采集于 2026-10-30",
+    "redistribution": "unclear",
+    "file": "data/licenses/changchun.md"
+  },
+  "provenance": {
+    "source": "长春 E 出行 H5 table2 接口（低频串行采集）",
+    "capturedAt": "2026-10-30T06:09:00Z",
+    "validFrom": "2026-10-30",
+    "validUntil": null,
+    "official": false,
+    "realtime": false,
+    "synthetic": false,
+    "modified": "按相邻站时刻唯一匹配重建车次；关联不唯一的区间断开不写入车次，已确认区段保留"
+  },
+  "defaults": { "from": "长春站", "to": "长影世纪城", "time": "08:00" },
+  "notices": [
+    "数据来源为长春 E 出行的公开查询接口，未取得明确再分发授权，默认不随公开发布分发。",
+    "时刻表没有列车 ID，车次由相邻站时刻唯一匹配重建，关联不唯一的区段不上车。",
+    "非实时、非官方，仅供研究与个人出行参考。"
+  ]
+}

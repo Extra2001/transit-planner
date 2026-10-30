@@ -9,15 +9,19 @@
   ],
   "scripts": {
     "build:data": "node scripts/build-data.mjs",
-    "dev": "npm run dev -w @transit/web",
-    "build": "npm run build -w @transit/web",
+    "dev": "npm run data:sync && npm run dev -w @transit/web",
+    "build": "npm run data:sync && npm run build -w @transit/web && npm run verify:public",
     "preview": "npm run preview -w @transit/web",
     "test": "npm run test -w @transit/core",
     "typecheck": "npm run typecheck -w @transit/core && npm run typecheck -w @transit/web",
     "test:changchun": "node tools/changchun-import/table2.test.mjs",
     "changchun:import": "node tools/changchun-import/import-table2.mjs build",
     "changchun:status": "node tools/changchun-import/import-table2.mjs status",
-    "changchun:rollback": "node tools/changchun-import/import-table2.mjs rollback"
+    "changchun:rollback": "node tools/changchun-import/import-table2.mjs rollback",
+    "build:local": "npm run data:sync -- --include-restricted && npm run build -w @transit/web",
+    "data:sync": "node scripts/sync-cities.mjs",
+    "data:validate": "vitest run packages/core/test/data-validation.test.ts",
+    "verify:public": "node scripts/verify-public.mjs"
   },
   "devDependencies": {
     "json5": "^2.2.3",

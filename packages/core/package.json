@@ -5,8 +5,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./data": "./src/data/network.json"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run",

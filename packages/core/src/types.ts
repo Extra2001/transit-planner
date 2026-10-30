@@ -99,6 +99,26 @@ export interface NetworkMeta {
   warnings: string[]
 }
 
+/** v2 站点输入：稳定 ID + 显示名 + 别名 + 该站停靠的线路（换乘站多线路站点关系） */
+export interface StationInput {
+  id?: string
+  name: string
+  aliases?: string[]
+  stops?: { line: string; direction?: string }[]
+}
+
+/** 服务日历条目：把「工作日/双休日」提升为可带例外日期的服务 */
+export interface ServiceDef {
+  id: string
+  label: string
+  /** 对应车次里的 dayType 0/1 */
+  dayType: number
+  /** 该服务通常覆盖的星期（1=周一 … 7=周日） */
+  days?: number[]
+  /** 具体日期覆盖：YYYY-MM-DD → service id */
+  exceptions?: Record<string, string>
+}
+
 /** trips 元素：[日期类型 0=工作日 1=双休日, 线路下标, 方向下标, [站下标, 分钟, ...]] */
 export type RawTrip = [number, number, number, number[]]
 
@@ -108,6 +128,14 @@ export interface NetworkData {
   lines: LineInfo[]
   transfers: TransferRecord[]
   trips: RawTrip[]
+  /** 城市 id，用于生成稳定站点 ID */
+  city?: string
+  /** 与 stations 平行的稳定 ID（v1 数据可缺省） */
+  stationIds?: string[]
+  /** 显示名 → 别名（搜索用，不参与路由） */
+  stationAliases?: Record<string, string[]>
+  /** 服务日历；缺省时按 dayType 0/1 处理 */
+  services?: ServiceDef[]
 }
 
 export interface TripStop {
