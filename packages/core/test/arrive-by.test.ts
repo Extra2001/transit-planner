@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   createNetwork,
+  searchDepartures,
   evaluateDoorExit,
   plan,
   planArriveBy,
@@ -220,18 +221,35 @@ describe('最晚出门与推荐窗口', () => {
       opts({ deadline: '08:40', door: { ...NO_DOOR, walkJitterSec: 180 } })
     )
     expect(res.ok).toBe(true)
-    expect(res.latest!.doorExit - res.recommended!.doorExit).toBe(180)
+    // 推荐方案必须留出完整的步行不确定性，因此可能改乘更早一班
+    expect(res.recommended!.slack).toBeGreaterThanOrEqual(180)
+    expect(res.recommended!.doorExit).toBeLessThanOrEqual(res.latest!.doorExit)
     expect(res.window!.end).toBe(res.recommended!.doorExit)
     expect(res.window!.end - res.window!.start).toBe(120)
-    expect(res.recommended!.arrivalDoor).toBe(res.latest!.arrivalDoor)
     expect(res.risk).toBe('safe')
   })
 
-  it('压线方案标记为 risky 且提示提前', () => {
+  it('理论最晚方案压线时会提示，推荐方案仍有完整余量', () => {
     const net = simpleLine()
     const res = planArriveBy(
       net,
       opts({ deadline: '08:32', door: { ...NO_DOOR, walkJitterSec: 600 } })
+    )
+    expect(res.ok).toBe(true)
+    expect(res.latest!.slack).toBe(0)
+    expect(res.recommended!.slack).toBeGreaterThanOrEqual(600)
+    expect(res.riskNote).toContain('压线')
+  })
+
+  it('只有一班车、余量无法补足时给出 risky 与建议', () => {
+    const net = makeNet({
+      stations: ['A', 'B', 'C', 'D'],
+      lines: [line('L1')],
+      trips: [[0, 0, 0, [0, 8 * 60, 1, 8 * 60 + 4, 2, 8 * 60 + 8, 3, 8 * 60 + 12]]]
+    })
+    const res = planArriveBy(
+      net,
+      opts({ deadline: '08:12', door: { ...NO_DOOR, walkJitterSec: 600 } })
     )
     expect(res.ok).toBe(true)
     expect(res.risk).toBe('risky')
@@ -385,6 +403,47 @@ describe('长春真实数据（本地存在时）', () => {
       expect(fromPos).toBeGreaterThanOrEqual(0)
       expect(toPos).toBeGreaterThan(fromPos)
     }
+  })
+})
+
+describe('出发时间窗口', () => {
+  function network(): Network {
+    const trips: RawTrip[] = []
+    for (let i = 0; i < 6; i++) {
+      const fast = 8 * 60 + i * 20
+      trips.push([0, 0, 0, [0, fast, 3, fast + 6]])
+      trips.push([0, 1, 0, [0, fast + 10, 3, fast + 18]])
+    }
+    return makeNet({ stations: ['A', 'B', 'C', 'D'], lines: [line('L1'), line('L2')], trips })
+  }
+
+  const base = () => ({
+    from: 'A',
+    to: 'D',
+    start: '08:00',
+    day: 'weekday' as const,
+    speed: 1,
+    door: { ...NO_DOOR, toPlatformSec: 300 }
+  })
+
+  it('窗口内给出多种目标，最早到达与最晚出门不同', () => {
+    const res = searchDepartures(network(), base())
+    expect(res.ok).toBe(true)
+    expect(res.candidates.length).toBeGreaterThanOrEqual(2)
+    expect(res.earliest!.arrivalDoor).toBeLessThan(res.latest!.arrivalDoor)
+    expect(res.latest!.doorExit).toBeGreaterThan(res.earliest!.doorExit)
+  })
+
+  it('窗口限制生效', () => {
+    const short = searchDepartures(network(), { ...base(), windowSec: 300 })
+    expect(short.ok).toBe(true)
+    for (const c of short.candidates) expect(c.boardDepart).toBeLessThanOrEqual(8 * 3600 + 300 + 300)
+  })
+
+  it('无班次时不编造', () => {
+    const res = searchDepartures(network(), { ...base(), start: '23:00' })
+    expect(res.ok).toBe(false)
+    expect(res.candidates).toEqual([])
   })
 })
 

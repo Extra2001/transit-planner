@@ -15,11 +15,16 @@ export {
   paretoFilter,
   transferWaitSeconds,
   walkSeconds,
-  evaluateDoorExit
+  evaluateDoorExit,
+  pickCandidates,
+  searchDepartures
 } from './arrive'
 export type {
   ArriveByOptions,
   ArriveByResult,
+  CandidateSelection,
+  DepartSearchResult,
+  DepartSearchOptions,
   DoorModel,
   JourneyCandidate,
   DepartureWindow,

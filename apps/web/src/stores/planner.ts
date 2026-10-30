@@ -1,6 +1,18 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { plan, type DayType, type Network, type PlanResult, type TransferOverride } from '@transit/core'
+import {
+  plan,
+  planArriveBy,
+  searchDepartures,
+  type ArriveByResult,
+  type DepartSearchResult,
+  type DayType,
+  type DoorModel,
+  type JourneyCandidate,
+  type Network,
+  type PlanResult,
+  type TransferOverride
+} from '@transit/core'
 import { cities, defaultCity, getCity } from '../cities/registry'
 import {
   CityDataUnavailable,
@@ -14,6 +26,44 @@ import {
 
 const STORAGE_KEY = 'transit-planner.overrides.v1'
 const CITY_KEY = 'transit-planner.city.v1'
+const MODE_KEY = 'transit-planner.mode.v1'
+const DOOR_KEY = 'transit-planner.door.v1'
+
+export type PlanMode = 'arrive' | 'depart'
+
+interface DoorSettings {
+  toPlatformMin: number
+  fromStationMin: number
+  jitterMin: number
+}
+
+const DEFAULT_DOOR: DoorSettings = { toPlatformMin: 12, fromStationMin: 5, jitterMin: 2 }
+
+function savedMode(): PlanMode | null {
+  try {
+    const raw = localStorage.getItem(MODE_KEY)
+    return raw === 'arrive' || raw === 'depart' ? raw : null
+  } catch {
+    return null
+  }
+}
+
+function savedDoor(): DoorSettings {
+  try {
+    const raw = localStorage.getItem(DOOR_KEY)
+    if (!raw) return { ...DEFAULT_DOOR }
+    const parsed = JSON.parse(raw) as Partial<DoorSettings>
+    const pick = (v: unknown, fallback: number) =>
+      typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 120 ? v : fallback
+    return {
+      toPlatformMin: pick(parsed.toPlatformMin, DEFAULT_DOOR.toPlatformMin),
+      fromStationMin: pick(parsed.fromStationMin, DEFAULT_DOOR.fromStationMin),
+      jitterMin: pick(parsed.jitterMin, DEFAULT_DOOR.jitterMin)
+    }
+  } catch {
+    return { ...DEFAULT_DOOR }
+  }
+}
 
 function defaultDay(): DayType {
   const d = new Date().getDay()
@@ -63,18 +113,34 @@ export const usePlannerStore = defineStore('planner', () => {
   const loading = ref(false)
   const loadError = ref('')
 
+  const saved = savedDoor()
+  const mode = ref<PlanMode>(savedMode() ?? 'arrive')
   const from = ref('')
   const to = ref('')
   const time = ref('08:00')
+  const deadline = ref('09:00')
   const day = ref<DayType>(defaultDay())
   const speed = ref(1)
   const bufferSec = ref(30)
   const sprint = 1.35
+  const toPlatformMin = ref(saved.toPlatformMin)
+  const fromStationMin = ref(saved.fromStationMin)
+  const jitterMin = ref(saved.jitterMin)
 
   const result = ref<PlanResult | null>(null)
+  const arriveResult = ref<ArriveByResult | null>(null)
+  const departOptions = ref<DepartSearchResult | null>(null)
+  const selectedCandidate = ref<JourneyCandidate | null>(null)
   const error = ref('')
   const computing = ref(false)
   const overrides = ref<TransferOverride[]>(loadOverrides())
+
+  const door = computed<DoorModel>(() => ({
+    toPlatformSec: Math.round(toPlatformMin.value * 60),
+    fromStationSec: Math.round(fromStationMin.value * 60),
+    safetySec: bufferSec.value,
+    walkJitterSec: Math.round(jitterMin.value * 60)
+  }))
 
   const activeManifest = computed(() => getCity(city.value) ?? defaultCity())
   const cityOptions = computed(() =>
@@ -129,6 +195,35 @@ export const usePlannerStore = defineStore('planner', () => {
     }
   }
 
+  function setMode(next: PlanMode) {
+    mode.value = next
+    try {
+      localStorage.setItem(MODE_KEY, next)
+    } catch {
+      /* 忽略 */
+    }
+    run()
+  }
+
+  function persistDoor() {
+    try {
+      localStorage.setItem(
+        DOOR_KEY,
+        JSON.stringify({
+          toPlatformMin: toPlatformMin.value,
+          fromStationMin: fromStationMin.value,
+          jitterMin: jitterMin.value
+        })
+      )
+    } catch {
+      /* 忽略 */
+    }
+  }
+
+  function selectCandidate(c: JourneyCandidate) {
+    selectedCandidate.value = c
+  }
+
   function applyDefaults() {
     const d = activeManifest.value.defaults
     from.value = d.from
@@ -162,6 +257,8 @@ export const usePlannerStore = defineStore('planner', () => {
     } catch (e) {
       ready.value = false
       network.value = null
+      arriveResult.value = null
+      selectedCandidate.value = null
       if (e instanceof CityDataUnavailable && e.reason === 'missing') {
         availability.value = { ...availability.value, [id]: false }
       }
@@ -198,6 +295,9 @@ export const usePlannerStore = defineStore('planner', () => {
 
   async function setCity(id: string) {
     if (id === city.value && ready.value) return
+    arriveResult.value = null
+    selectedCandidate.value = null
+    result.value = null
     await activate(id)
   }
 
@@ -265,20 +365,50 @@ export const usePlannerStore = defineStore('planner', () => {
     computing.value = true
     error.value = ''
     try {
-      result.value = plan(net, {
-        from: from.value,
-        to: to.value,
-        time: time.value,
-        day: day.value,
-        speed: speed.value,
-        bufferSec: bufferSec.value,
-        sprint,
-        minSaveSec: 90,
-        transferOverrides: overrides.value
-      })
+      if (mode.value === 'arrive') {
+        const res = planArriveBy(net, {
+          from: from.value,
+          to: to.value,
+          deadline: deadline.value,
+          day: day.value,
+          door: door.value,
+          speed: speed.value,
+          transferOverrides: overrides.value
+        })
+        arriveResult.value = res
+        selectedCandidate.value = res.recommended ?? res.latest ?? null
+        result.value = null
+        departOptions.value = null
+      } else {
+        result.value = plan(net, {
+          from: from.value,
+          to: to.value,
+          time: time.value,
+          day: day.value,
+          speed: speed.value,
+          bufferSec: bufferSec.value,
+          sprint,
+          minSaveSec: 90,
+          transferOverrides: overrides.value
+        })
+        arriveResult.value = null
+        selectedCandidate.value = null
+        departOptions.value = searchDepartures(net, {
+          from: from.value,
+          to: to.value,
+          start: time.value,
+          day: day.value,
+          door: door.value,
+          speed: speed.value,
+          transferOverrides: overrides.value,
+          windowSec: 1800
+        })
+      }
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e)
       result.value = null
+      arriveResult.value = null
+      departOptions.value = null
     } finally {
       computing.value = false
     }
@@ -297,14 +427,26 @@ export const usePlannerStore = defineStore('planner', () => {
     offlineCached,
     tripUnit,
     sourceLabel,
+    mode,
+    setMode,
     from,
     to,
     time,
+    deadline,
+    door,
+    toPlatformMin,
+    fromStationMin,
+    jitterMin,
+    persistDoor,
     day,
     speed,
     bufferSec,
     sprint,
     result,
+    arriveResult,
+    departOptions,
+    selectedCandidate,
+    selectCandidate,
     error,
     computing,
     overrides,

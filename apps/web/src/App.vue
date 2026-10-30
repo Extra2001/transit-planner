@@ -3,6 +3,8 @@ import { computed, onMounted } from 'vue'
 import { usePlannerStore } from './stores/planner'
 import StationField from './components/StationField.vue'
 import PlanView from './components/PlanView.vue'
+import ArriveView from './components/ArriveView.vue'
+import DepartureOptions from './components/DepartureOptions.vue'
 import CoveragePanel from './components/CoveragePanel.vue'
 
 const store = usePlannerStore()
@@ -67,6 +69,26 @@ onMounted(() => store.init())
 
       <template v-else>
         <section class="card form-card">
+          <div class="segmented mode-switch" role="tablist" aria-label="时间规划方式">
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="store.mode === 'arrive'"
+              :class="{ active: store.mode === 'arrive' }"
+              @click="store.setMode('arrive')"
+            >
+              按到达时间
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="store.mode === 'depart'"
+              :class="{ active: store.mode === 'depart' }"
+              @click="store.setMode('depart')"
+            >
+              按出发时间
+            </button>
+          </div>
           <form @submit.prevent="store.run()">
             <div class="station-row">
               <StationField
@@ -88,8 +110,16 @@ onMounted(() => store.init())
 
             <div class="two-col">
               <label class="field">
-                <span class="field-label">出发时间</span>
-                <input v-model="store.time" type="time" step="60" required @change="onFieldChange" />
+                <span class="field-label">{{ store.mode === 'arrive' ? '到达时间' : '出发时间' }}</span>
+                <input
+                  v-if="store.mode === 'arrive'"
+                  v-model="store.deadline"
+                  type="time"
+                  step="60"
+                  required
+                  @change="onFieldChange"
+                />
+                <input v-else v-model="store.time" type="time" step="60" required @change="onFieldChange" />
               </label>
               <div class="field">
                 <span class="field-label">日期类型</span>
@@ -110,6 +140,42 @@ onMounted(() => store.init())
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div v-if="store.mode === 'arrive'" class="door-grid">
+              <label class="field">
+                <span class="field-label">家 → 站台（分钟）</span>
+                <input
+                  v-model.number="store.toPlatformMin"
+                  type="number"
+                  min="0"
+                  max="120"
+                  step="1"
+                  @change="store.persistDoor(); onFieldChange()"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">站台 → 目的地（分钟）</span>
+                <input
+                  v-model.number="store.fromStationMin"
+                  type="number"
+                  min="0"
+                  max="120"
+                  step="1"
+                  @change="store.persistDoor(); onFieldChange()"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">步行不确定性（分钟）</span>
+                <input
+                  v-model.number="store.jitterMin"
+                  type="number"
+                  min="0"
+                  max="30"
+                  step="1"
+                  @change="store.persistDoor(); onFieldChange()"
+                />
+              </label>
             </div>
 
             <div class="field speed-field">
@@ -149,17 +215,23 @@ onMounted(() => store.init())
             </details>
 
             <button class="submit-btn" type="submit" :disabled="store.computing">
-              {{ store.computing ? '计算中…' : '查询最快方案' }}
+              {{ store.computing ? '计算中…' : store.mode === 'arrive' ? '查询到达方案' : '查询最快方案' }}
             </button>
           </form>
         </section>
 
-        <PlanView
-          v-if="store.result"
-          :result="store.result"
+        <ArriveView
+          v-if="store.mode === 'arrive' && store.arriveResult"
+          :result="store.arriveResult"
+          :candidate="store.selectedCandidate"
           :day-label="dayLabel"
-          :depart-time="store.time"
+          :deadline="store.deadline"
         />
+
+        <template v-else-if="store.result">
+          <PlanView :result="store.result" :day-label="dayLabel" :depart-time="store.time" />
+          <DepartureOptions v-if="store.departOptions?.ok" :result="store.departOptions" />
+        </template>
 
         <section v-else-if="store.error" class="card error-card">
           <h2>暂时无法计算</h2>

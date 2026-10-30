@@ -38,6 +38,8 @@ export interface ArriveByOptions {
   maxSearchSec?: number
   /** 推荐窗口宽度，默认 120 秒 */
   windowSec?: number
+  /** 备选方案搜索区间，默认 30 分钟 */
+  searchWindowSec?: number
   /** 备选方案上限，默认 5 */
   maxCandidates?: number
 }
@@ -171,7 +173,7 @@ function buildCandidate(
     arrivalStation: it.arrival,
     arrivalDoor,
     duration: arrivalDoor - doorExit,
-    slack: deadlineSec - arrivalDoor,
+    slack: Number.isFinite(deadlineSec) ? deadlineSec - arrivalDoor : 0,
     transferWait: transferWaitSeconds(it),
     walkSec: walkSeconds(it, opt.door),
     missedDelay: null,
@@ -253,27 +255,144 @@ function annotateMissed(
   c.missedDelay = later ? later.arrivalDoor - c.arrivalDoor : null
 }
 
+export interface CandidateSelection {
+  earliest: JourneyCandidate | null
+  latest: JourneyCandidate | null
+  leastWait: JourneyCandidate | null
+  alternatives: JourneyCandidate[]
+}
+
+/** 三种目标分别保留，再按到达时间补充有明显区别的备选 */
+export function pickCandidates(cands: JourneyCandidate[], maxCand = 5): CandidateSelection {
+  const pool = paretoFilter(cands)
+  const earliest =
+    [...cands].sort((a, b) => a.arrivalDoor - b.arrivalDoor || a.doorExit - b.doorExit)[0] ?? null
+  const latest =
+    [...cands].sort((a, b) => b.doorExit - a.doorExit || a.arrivalDoor - b.arrivalDoor)[0] ?? null
+  const leastWait =
+    [...cands].sort(
+      (a, b) =>
+        a.platformWait + a.transferWait - (b.platformWait + b.transferWait) ||
+        b.doorExit - a.doorExit
+    )[0] ?? null
+
+  const picked: JourneyCandidate[] = []
+  const push = (c: JourneyCandidate | null | undefined, label: JourneyCandidate['label']) => {
+    if (!c || picked.length >= maxCand) return
+    if (picked.some((p) => p === c || (signature(p) === signature(c) && p.doorExit === c.doorExit)))
+      return
+    c.label = label
+    picked.push(c)
+  }
+  push(earliest, 'earliest')
+  push(latest, 'latest')
+  push(leastWait, 'least-wait')
+  for (const c of pool) push(c, 'alternative')
+
+  return {
+    earliest,
+    latest,
+    leastWait,
+    alternatives: picked.sort((a, b) => a.arrivalDoor - b.arrivalDoor || b.doorExit - a.doorExit)
+  }
+}
+
+export interface DepartSearchOptions {
+  from: string
+  to: string
+  /** HH:MM 出发时间 */
+  start: string
+  day: DayType
+  door: DoorModel
+  speed: number
+  sprint?: number
+  transferOverrides?: TransferOverride[]
+  /** 搜索窗口，默认 30 分钟 */
+  windowSec?: number
+  maxCandidates?: number
+}
+
+/** 出发时间窗口内各方案（门到门模型不变，不设截止时间） */
+export interface DepartSearchResult {
+  ok: boolean
+  reason?: string
+  candidates: JourneyCandidate[]
+  earliest: JourneyCandidate | null
+  latest: JourneyCandidate | null
+  leastWait: JourneyCandidate | null
+  warnings: string[]
+}
+
+export function searchDepartures(net: Network, opt: DepartSearchOptions): DepartSearchResult {
+  const warnings: string[] = []
+  const startSec = parseClock(opt.start) * 60
+  const windowSec = opt.windowSec ?? 1800
+  const asArrive: ArriveByOptions = {
+    from: opt.from,
+    to: opt.to,
+    deadline: opt.start,
+    day: opt.day,
+    door: opt.door,
+    speed: opt.speed,
+    sprint: opt.sprint,
+    transferOverrides: opt.transferOverrides
+  }
+  const fromIdx = net.stationIndex.get(opt.from) ?? -1
+  const day = opt.day === 'weekday' ? 0 : 1
+  if (fromIdx < 0) {
+    return { ok: false, reason: '出发站不在数据覆盖范围内。', candidates: [], earliest: null, latest: null, leastWait: null, warnings }
+  }
+  const boarded = new Set<string>()
+  const cands: JourneyCandidate[] = []
+  const minBoard = startSec + opt.door.toPlatformSec + opt.door.safetySec
+  const maxBoard = minBoard + windowSec
+  for (const line of net.lineAt[fromIdx] ?? []) {
+    for (let dir = 0; dir < net.lines[line].directions.length; dir++) {
+      const occs = net.occByDay[day].get(`${line}:${dir}:${fromIdx}`)
+      if (!occs) continue
+      for (const occ of occs) {
+        const depart = net.tripsById[occ.trip].stops[occ.pos].minute * 60
+        if (depart < minBoard || depart > maxBoard) continue
+        const t = depart - opt.door.toPlatformSec - opt.door.safetySec - 1
+        if (boarded.has(`${t}`)) continue
+        const c = buildCandidate(net, asArrive, t, Number.POSITIVE_INFINITY, false)
+        if (!c || Math.abs(c.boardDepart - depart) >= 1) continue
+        boarded.add(`${t}`)
+        cands.push(c)
+      }
+    }
+  }
+  if (!cands.length) {
+    return { ok: false, reason: `未来 ${Math.round(windowSec / 60)} 分钟内没有可用班次。`, candidates: [], earliest: null, latest: null, leastWait: null, warnings }
+  }
+  const sel = pickCandidates(cands, opt.maxCandidates ?? 5)
+  for (const c of sel.alternatives) annotateMissed(net, asArrive, c, Number.POSITIVE_INFINITY)
+  return { ok: true, candidates: sel.alternatives, earliest: sel.earliest, latest: sel.latest, leastWait: sel.leastWait, warnings }
+}
+
 function riskOf(
-  latestSlack: number,
   recommendedSlack: number,
+  latestSlack: number,
   jitter: number
 ): { risk: RiskLevel; note: string } {
   const slack = recommendedSlack
-  if (latestSlack < jitter) {
+  const tightLatest =
+    latestSlack < 60
+      ? `理论最晚出门会压线到达（余量不足 1 分钟），已按 ${Math.round(jitter / 60)} 分钟步行不确定性提前推荐。`
+      : ''
+  if (slack >= 300) {
+    return { risk: 'safe', note: `推荐方案到达后仍有 ${Math.round(slack / 60)} 分钟余量。${tightLatest}` }
+  }
+  if (slack >= 120) {
     return {
-      risk: 'risky',
-      note: `理论最晚方案到达余量 ${Math.round(latestSlack / 60)} 分钟，覆盖不了 ${Math.round(jitter / 60)} 分钟步行不确定性，建议改用推荐时间。`
+      risk: 'tight',
+      note: `到达后仅余 ${Math.round(slack / 60)} 分钟，可行但不宽裕。${tightLatest}`
     }
   }
-  if (slack < jitter) {
-    return {
-      risk: 'risky',
-      note: `到达余量 ${Math.round(slack / 60)} 分钟小于步行不确定性 ${Math.round(jitter / 60)} 分钟，建议再提前。`
-    }
+  return {
+    risk: 'risky',
+    note: `推荐方案到达余量不足 2 分钟，无法覆盖步行不确定性；建议提前出门或调整截止时间。${tightLatest}`
   }
-  if (slack >= 300) return { risk: 'safe', note: `到达后仍有 ${Math.round(slack / 60)} 分钟余量。` }
-  if (slack >= 120) return { risk: 'tight', note: `仅余 ${Math.round(slack / 60)} 分钟，按计划可行但不宽裕。` }
-  return { risk: 'risky', note: `到达余量不足 2 分钟，属于压线方案。` }
 }
 
 /**
@@ -291,43 +410,50 @@ export function planArriveBy(net: Network, opt: ArriveByOptions): ArriveByResult
   let evaluations = 0
 
   const door = opt.door
-  const upper = deadlineSec - door.fromStationSec - door.toPlatformSec - door.safetySec
   const lower = Math.max(0, deadlineSec - maxSearch)
-  const diag = { evaluations: 0, searchSpanSec: upper - lower, latestFeasible: false }
+  const diag = { evaluations: 0, searchSpanSec: 0, latestFeasible: false }
 
   if (net.stationIndex.get(opt.from) === net.stationIndex.get(opt.to)) {
     return failed('出发站与目的站相同，无需乘车。')
   }
 
-  const evaluate = (t: number): JourneyCandidate | null => {
+  const evaluate = (t: number, limitSec: number): JourneyCandidate | null => {
     evaluations += 1
-    return buildCandidate(net, opt, t, deadlineSec, false)
+    return buildCandidate(net, opt, t, limitSec, false)
   }
 
-  if (upper < lower) {
-    return failed('截止时间早于门到门所需的最短时间，无法规划。')
-  }
-
-  if (!evaluate(upper)) {
-    // 上界不可行：二分找最晚可行；若下界也不可行则无解
-    if (!evaluate(lower)) {
-      return failed(
-        `在 ${Math.round(maxSearch / 3600)} 小时搜索窗口内没有能在截止时间前到达的班次（可能已过末班车或数据未覆盖该方向）。`
-      )
-    }
+  /**
+   * 在 [lower, upper] 中找「到达时刻不晚于 limitSec」的最晚离家时刻。
+   * 到达时刻随离家时刻单调不减（等待只会更差），因此可行集合是前缀，可二分。
+   */
+  function latestFeasible(limitSec: number): number | null {
+    const upper = limitSec - door.fromStationSec - door.toPlatformSec - door.safetySec
+    if (upper < lower) return null
+    if (evaluate(upper, limitSec)) return upper
+    if (!evaluate(lower, limitSec)) return null
     let lo = lower
     let hi = upper
     while (hi - lo > 1) {
       const mid = Math.floor((lo + hi) / 2)
-      if (evaluate(mid)) lo = mid
+      if (evaluate(mid, limitSec)) lo = mid
       else hi = mid
     }
-    diag.latestFeasible = true
-    return finish(lo)
+    return lo
   }
 
+  const latestT = latestFeasible(deadlineSec)
+  if (latestT === null) {
+    return failed(
+      `在 ${Math.round(maxSearch / 3600)} 小时搜索窗口内没有能在截止时间前到达的班次（可能已过末班车或数据未覆盖该方向）。`
+    )
+  }
   diag.latestFeasible = true
-  return finish(upper)
+
+  // 推荐出门：把步行不确定性作为到达余量，绝不让推荐方案压线
+  const jitter = door.walkJitterSec
+  const recT = jitter > 0 ? (latestFeasible(deadlineSec - jitter) ?? latestT) : latestT
+
+  return finish(latestT, recT)
 
   function failed(reason: string): ArriveByResult {
     diag.evaluations = evaluations
@@ -346,75 +472,43 @@ export function planArriveBy(net: Network, opt: ArriveByOptions): ArriveByResult
     }
   }
 
-  function finish(latestDoorExit: number): ArriveByResult {
+  function finish(latestDoorExit: number, recDoor: number): ArriveByResult {
     const latest = buildCandidate(net, opt, latestDoorExit, deadlineSec, true)
-    if (!latest) return failed('截止时间附近没有可用的完整行程。')
-
-    // 推荐出门：扣除步行不确定性，绝不把压线方案当推荐
-    const recRaw = latestDoorExit - door.walkJitterSec
-    const recDoor = Math.max(lower, recRaw)
     const recommended = buildCandidate(net, opt, recDoor, deadlineSec, true) ?? latest
+    if (!latest || !recommended) return failed('截止时间附近没有可用的完整行程。')
+
     const win: DepartureWindow = {
       start: Math.max(lower, recommended.doorExit - windowSec),
       end: recommended.doorExit
     }
-    const risk = riskOf(latest.slack, recommended.slack, door.walkJitterSec)
+    const risk = riskOf(recommended.slack, latest.slack, jitter)
 
-    // 窗口内候选：以真实首乘发车为锚点，避免逐分钟枚举
     const day = opt.day === 'weekday' ? 0 : 1
     const cands: JourneyCandidate[] = [latest, recommended]
     const fromIdx = net.stationIndex.get(opt.from) ?? -1
-    const linesAtOrigin = net.lineAt[fromIdx] ?? []
-    const minBoard = win.start + door.toPlatformSec + door.safetySec
+    const searchStart = Math.max(lower, recDoor - (opt.searchWindowSec ?? 1800))
+    const minBoard = searchStart + door.toPlatformSec + door.safetySec
     const maxBoard = win.end + door.toPlatformSec + door.safetySec
-    for (const line of linesAtOrigin) {
+    for (const line of net.lineAt[fromIdx] ?? []) {
       for (let dir = 0; dir < net.lines[line].directions.length; dir++) {
         const occs = net.occByDay[day].get(`${line}:${dir}:${fromIdx}`)
         if (!occs) continue
         for (const occ of occs) {
-          const departMin = net.tripsById[occ.trip].stops[occ.pos].minute
-          const depart = departMin * 60
+          const depart = net.tripsById[occ.trip].stops[occ.pos].minute * 60
           if (depart < minBoard || depart > maxBoard) continue
           // 严格早于发车 1 秒，保证能上这一班（路由器要求 depart > 开始时刻）
           const t = depart - door.toPlatformSec - door.safetySec - 1
-          const c = evaluate(t)
+          const c = evaluate(t, deadlineSec)
           if (c && Math.abs(c.boardDepart - depart) < 1) cands.push(c)
         }
       }
     }
 
-    const filtered = paretoFilter(cands)
-    // 目标明确分开：最早到达 / 最晚出门 / 站外等待最少
-    const earliest =
-      [...cands].sort((a, b) => a.arrivalDoor - b.arrivalDoor || b.doorExit - a.doorExit)[0] ?? null
-    const latestPick =
-      [...cands].sort((a, b) => b.doorExit - a.doorExit || a.arrivalDoor - b.arrivalDoor)[0] ?? null
-    const leastWait =
-      [...cands].sort(
-        (a, b) =>
-          a.platformWait + a.transferWait - (b.platformWait + b.transferWait) ||
-          b.doorExit - a.doorExit
-      )[0] ?? null
-
-    const maxCand = opt.maxCandidates ?? 5
-    const picked: JourneyCandidate[] = []
-    const push = (c: JourneyCandidate | null | undefined, label: JourneyCandidate['label']) => {
-      if (!c || picked.length >= maxCand) return
-      if (picked.some((p) => p === c || (signature(p) === signature(c) && p.doorExit === c.doorExit)))
-        return
-      c.label = label
-      picked.push(c)
-    }
-    push(earliest, 'earliest')
-    push(latestPick, 'latest')
-    push(leastWait, 'least-wait')
-    for (const c of filtered) push(c, 'alternative')
-
-    for (const c of picked) annotateMissed(net, opt, c, deadlineSec)
-
-    const sorted = picked.sort((a, b) => a.arrivalDoor - b.arrivalDoor || b.doorExit - a.doorExit)
+    const sel = pickCandidates(cands, opt.maxCandidates ?? 5)
+    for (const c of sel.alternatives) annotateMissed(net, opt, c, deadlineSec)
 
     diag.evaluations = evaluations
+    diag.searchSpanSec = deadlineSec - lower
     return {
       ok: true,
       latest,
@@ -422,8 +516,8 @@ export function planArriveBy(net: Network, opt: ArriveByOptions): ArriveByResult
       window: win,
       risk: risk.risk,
       riskNote: risk.note,
-      alternatives: sorted,
-      earliest,
+      alternatives: sel.alternatives,
+      earliest: sel.earliest,
       warnings,
       diagnostics: diag
     }
