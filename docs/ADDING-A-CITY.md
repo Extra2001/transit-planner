@@ -114,6 +114,22 @@ cities/<id>/
 
 ## 4. 适配器
 
+现成参考：
+
+- `tools/demo-city/generate.mjs`：最小适配器（合成数据，可直接复制改名）；
+- `scripts/lib/to-v2.mjs`：把 v1 扁平数据补成 v2（稳定 ID、别名、站点-线路关系）；
+- `scripts/lib/publish-city.mjs`：统一发布层，写 `network.json` + `status.json`，
+  并把 manifest 的许可/来源带进 status。
+
+```js
+import { toV2 } from '../../scripts/lib/to-v2.mjs'
+import { publishCity, readManifest } from '../../scripts/lib/publish-city.mjs'
+
+const network = toV2(v1Data, { city: 'demo' })
+publishCity({ cityId: 'demo', network, status, manifest: readManifest(root, 'demo'), root })
+```
+
+
 把上游数据转成上面的格式，放在 `tools/<id>-import/` 或 `scripts/`，要求：
 
 - 分阶段：采集 / 原始解析 / 归一化 / 校验 / 车次重建 / 发布；

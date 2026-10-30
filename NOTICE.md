@@ -7,6 +7,7 @@
 | 代码 | `packages/`、`apps/`、`scripts/`、`tools/` | MIT（`LICENSE`） | 允许 |
 | 北京时刻数据 | `cities/beijing/network.json` | CC BY-SA 4.0 | 允许（须署名 + 相同许可） |
 | 长春时刻数据 | `cities/changchun/network.json` | 未确认 | **不允许**，默认不随仓库/构建分发 |
+| 合成示例城市 | `cities/demo/network.json` | CC0 1.0 | 允许（虚构数据，界面标注「合成」） |
 | 换乘步行时间 | 已并入北京数据文件 | MIT（上游） | 允许 |
 | 调研原始材料 | `research/` | 多种 | 多数未确认，仅存档 |
 | 界面截图、研究报告 | `research/screenshots/`、`research/report.md` | MIT | 允许 |

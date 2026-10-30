@@ -15,6 +15,8 @@
  *   - 换乘步行按方向/时段存为多个变体，路由取保守上界；30 秒原值保留并标风险。
  */
 import fs from 'node:fs'
+import { toV2 } from './lib/to-v2.mjs'
+import { publishCity, readManifest } from './lib/publish-city.mjs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import JSON5 from 'json5'
@@ -401,8 +403,8 @@ const warnings = [
   '时刻为计划图；不含节假日专用图、临客、故障与临时限流。'
 ]
 
-// ---------- 输出 ----------
-const out = {
+// ---------- 发布 ----------
+const v1 = {
   meta: {
     schemaVersion: 2,
     title: '北京地铁全网络逐班计划时刻（原型）',
@@ -425,14 +427,34 @@ const out = {
   trips
 }
 
-const outPath = path.join(root, 'packages/core/src/data/network.json')
-fs.writeFileSync(outPath, JSON.stringify(out))
-const size = fs.statSync(outPath).size
-console.log(`写出 ${outPath}`)
+const network = toV2(v1, { city: 'beijing' })
+const status = {
+  status: 'ready',
+  capturedAt: '2026-01-13',
+  counts: { ...v1.meta.counts, groups: lines.length },
+  coverage: 1,
+  coverageDetail: {
+    coveredStations: stationNames.length,
+    expectedStations: stationNames.length,
+    stationCoverage: 1
+  },
+  note: '28 条线全部导入；6 号线通过不停车已剔除；不含节假日专用图与临客。',
+  warnings
+}
+
+const published = publishCity({
+  cityId: 'beijing',
+  network,
+  status,
+  manifest: readManifest(root, 'beijing'),
+  root
+})
+
+console.log(`写出 ${path.relative(root, published.networkFile)} 与 status.json`)
 console.log(
   `线路 ${lines.length}，车站 ${stationNames.length}，班次 ${trips.length}，换乘变体 ${transferVariants.length}（默认补齐 ${fallbackTransfers}）`
 )
-console.log(`大小 ${(size / 1024 / 1024).toFixed(2)} MiB`)
+console.log(`大小 ${(published.bytes / 1024 / 1024).toFixed(2)} MiB`)
 console.log('线路状态:')
 for (const l of lines) {
   console.log(

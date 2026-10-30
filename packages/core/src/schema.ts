@@ -12,9 +12,14 @@ export interface NetworkDataV2 {
   transfers: NetworkData['transfers']
   trips: RawTrip[]
   services?: ServiceDef[]
+  uncertainty?: NetworkData['uncertainty']
 }
 
+/** 当前支持的最高 schema 版本；更高版本必须显式升级，避免静默误解数据。 */
+export const SCHEMA_VERSION = 2
+
 const DAY_TYPES = new Set([0, 1])
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
 /**
  * 校验并迁移为内部使用的 v1 扁平结构。
@@ -48,7 +53,8 @@ export function migrateNetworkData(input: NetworkInput): NetworkData {
       stations: names,
       lines: data.lines,
       transfers: data.transfers,
-      trips: data.trips
+      trips: data.trips,
+      uncertainty: data.uncertainty
     },
     { names, ids, aliases, services: data.services, city: data.city }
   )
@@ -78,6 +84,13 @@ export function validateNetworkData(input: NetworkInput): string[] {
   const errors: string[] = []
   if (!input || typeof input !== 'object') return ['数据不是对象']
   const data = input as NetworkDataV2
+  const version = Number(
+    (data as { schemaVersion?: unknown }).schemaVersion ?? data.meta?.schemaVersion ?? 1
+  )
+  if (!Number.isInteger(version) || version < 1) errors.push('schemaVersion 非法')
+  else if (version > SCHEMA_VERSION) {
+    errors.push(`数据 schemaVersion ${version} 高于本版本支持（${SCHEMA_VERSION}），请升级 @transit/core`)
+  }
   if (!data.meta || typeof data.meta !== 'object') errors.push('缺少 meta')
   if (!Array.isArray(data.lines) || !data.lines.length) errors.push('缺少 lines')
   if (!Array.isArray(data.trips) || !data.trips.length) errors.push('缺少 trips')
@@ -130,6 +143,54 @@ export function validateNetworkData(input: NetworkInput): string[] {
         errors.push(`换乘记录 ${i} 的站点下标越界`)
       }
       if (typeof t?.sec !== 'number' || t.sec < 0) errors.push(`换乘记录 ${i} 的秒数非法`)
+    }
+  }
+
+  if (data.services !== undefined) {
+    if (!Array.isArray(data.services)) errors.push('services 不是数组')
+    else {
+      const ids = new Set<string>()
+      for (const [i, svc] of data.services.entries()) {
+        if (!svc?.id) errors.push(`服务 ${i} 缺少 id`)
+        else if (ids.has(svc.id)) errors.push(`服务 id 重复：${svc.id}`)
+        else ids.add(svc.id)
+        if (!DAY_TYPES.has(svc?.dayType)) errors.push(`服务 ${svc?.id ?? i} 的 dayType 非法`)
+        if (
+          svc?.days &&
+          (!Array.isArray(svc.days) || svc.days.some((d) => !Number.isInteger(d) || d < 1 || d > 7))
+        ) {
+          errors.push(`服务 ${svc.id} 的 days 非法`)
+        }
+      }
+      for (const svc of data.services) {
+        if (!svc?.exceptions) continue
+        for (const [date, target] of Object.entries(svc.exceptions)) {
+          if (!DATE_RE.test(date)) errors.push(`服务 ${svc.id} 的例外日期格式非法：${date}`)
+          if (typeof target !== 'string' || !target) {
+            errors.push(`服务 ${svc.id} 在 ${date} 的例外指向非法`)
+          } else if (!ids.has(target)) {
+            errors.push(`服务 ${svc.id} 在 ${date} 指向不存在的服务：${target}`)
+          }
+        }
+      }
+    }
+  }
+
+  if (data.uncertainty !== undefined) {
+    const u = data.uncertainty as Record<string, unknown>
+    if (!u || typeof u !== 'object') errors.push('uncertainty 不是对象')
+    else {
+      for (const key of ['associationCoverage'] as const) {
+        if (u[key] !== undefined && (typeof u[key] !== 'number' || (u[key] as number) < 0 || (u[key] as number) > 1)) {
+          errors.push(`uncertainty.${key} 必须是 0–1 的比例`)
+        }
+      }
+      for (const key of ['ambiguousLegs', 'legCount', 'uncertainPairs'] as const) {
+        if (u[key] !== undefined && (!Number.isInteger(u[key]) || (u[key] as number) < 0)) {
+          errors.push(`uncertainty.${key} 必须是非负整数`)
+        }
+      }
+      if (u.note !== undefined && typeof u.note !== 'string') errors.push('uncertainty.note 必须是字符串')
     }
   }
 

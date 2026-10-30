@@ -136,6 +136,14 @@ export interface NetworkData {
   stationAliases?: Record<string, string[]>
   /** 服务日历；缺省时按 dayType 0/1 处理 */
   services?: ServiceDef[]
+  /** 车次关联的不确定性说明（例如由相邻站时刻推断、部分区段断开） */
+  uncertainty?: {
+    associationCoverage?: number
+    ambiguousLegs?: number
+    legCount?: number
+    uncertainPairs?: number
+    note?: string
+  }
 }
 
 export interface TripStop {

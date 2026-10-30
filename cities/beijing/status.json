@@ -1,0 +1,37 @@
+{
+ "status": "ready",
+ "version": "2026-10-30T08-48-34-728Z",
+ "capturedAt": "2026-01-13",
+ "counts": {
+  "lines": 28,
+  "stations": 425,
+  "trips": 19844,
+  "transferVariants": 299,
+  "fallbackTransfers": 78,
+  "groups": 28
+ },
+ "coverage": 1,
+ "coverageDetail": {
+  "coveredStations": 425,
+  "expectedStations": 425,
+  "stationCoverage": 1
+ },
+ "license": {
+  "id": "CC-BY-SA-4.0",
+  "redistribution": "allowed"
+ },
+ "provenance": {
+  "source": "BoyInTheSun/beijing-subway-schedule train_schedule_all/schedule.json",
+  "validFrom": "2026-01-13",
+  "validUntil": null,
+  "official": false,
+  "realtime": false,
+  "synthetic": false,
+  "modified": "站名去线路后缀、剔除 6 号线通过不停车、时刻换算为服务日分钟、重排为紧凑 JSON；未合成缺失班次"
+ },
+ "note": "28 条线全部导入；6 号线通过不停车已剔除；不含节假日专用图与临客。",
+ "warnings": [
+  "换乘步行时间为爱好者整理/推算，非运营方实测；30 秒级记录（含西直门 2→4）可能偏乐观，未自动改写。",
+  "时刻为计划图；不含节假日专用图、临客、故障与临时限流。"
+ ]
+}

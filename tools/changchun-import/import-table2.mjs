@@ -8,6 +8,8 @@
  * 没有真实响应时不会生成长春班次；不做网络请求。
  */
 import fs from 'node:fs'
+import { toV2 } from '../../scripts/lib/to-v2.mjs'
+import { publishCity, readManifest } from '../../scripts/lib/publish-city.mjs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
@@ -580,7 +582,6 @@ function cmdBuild(flags) {
   fs.mkdirSync(importedDir, { recursive: true })
   fs.writeFileSync(path.join(importedDir, 'current.json'), JSON.stringify(metadata, null, 2))
   writeAppNetwork(metadata, versionDir)
-  writeStatusFile(metadata)
   console.log(JSON.stringify(metadata, null, 2))
   console.log(`\n版本目录：${path.relative(root, versionDir)}`)
   console.log(
@@ -599,40 +600,21 @@ function cmdStatus() {
 }
 
 function writeAppNetwork(metadata, versionDir) {
-  const target = path.join(root, 'apps/web/src/data/changchun-network.json')
-  fs.mkdirSync(path.dirname(target), { recursive: true })
+  const manifest = readManifest(root, 'changchun')
   const source = path.join(versionDir, 'network.json')
+  let network = null
   if (metadata.status === 'ready' && fs.existsSync(source)) {
-    fs.copyFileSync(source, target)
-    return
+    network = toV2(JSON.parse(fs.readFileSync(source, 'utf8')), { city: 'changchun' })
+    if (metadata.association) {
+      network.uncertainty = {
+        associationCoverage: metadata.association.associationCoverage,
+        ambiguousLegs: metadata.association.ambiguousLegs,
+        legCount: metadata.association.legCount,
+        uncertainPairs: metadata.association.uncertainPairs,
+        note: '车次由相邻站时刻唯一匹配推断；关联不唯一的区段已断开，不写入车次。'
+      }
+    }
   }
-  fs.writeFileSync(
-    target,
-    JSON.stringify(
-      {
-        meta: {
-          schemaVersion: 2,
-          title: '长春轨道交通（尚未就绪）',
-          generatedAt: metadata.generatedAt,
-          aggregateUpdatedAt: metadata.capturedAt?.slice(0, 10) ?? metadata.generatedAt.slice(0, 10),
-          aggregateUpdatedNote: '样本覆盖不足，未生成正式 network.json',
-          counts: { lines: 0, stations: 0, trips: 0, transferVariants: 0, fallbackTransfers: 0 },
-          warnings: ['长春数据尚未完成导入，不参与查询']
-        },
-        lines: [],
-        stations: [],
-        transfers: [],
-        trips: []
-      },
-      null,
-      2
-    )
-  )
-}
-
-function writeStatusFile(metadata) {
-  const statusFile = path.join(root, 'apps/web/src/data/changchun-status.json')
-  fs.mkdirSync(path.dirname(statusFile), { recursive: true })
   const association = metadata.association
   const note =
     metadata.status === 'ready'
@@ -640,24 +622,24 @@ function writeStatusFile(metadata) {
         ? `已开放查询；${association.ambiguousLegs}/${association.legCount} 段相邻站关联不唯一，这些区段未写入车次`
         : '已开放查询；全部相邻站关联唯一'
       : '未达就绪门槛，不参与查询'
-  fs.writeFileSync(
-    statusFile,
-    JSON.stringify(
-      {
-        status: metadata.status,
-        version: metadata.version,
-        capturedAt: metadata.capturedAt,
-        counts: metadata.counts,
-        coverage: metadata.coverageDetail?.stationCoverage ?? 0,
-        coverageDetail: metadata.coverageDetail,
-        association,
-        gate: metadata.gate,
-        note
-      },
-      null,
-      2
-    )
-  )
+  const published = publishCity({
+    cityId: 'changchun',
+    network,
+    manifest,
+    root,
+    status: {
+      status: metadata.status,
+      version: metadata.version,
+      capturedAt: metadata.capturedAt,
+      counts: metadata.counts,
+      coverage: metadata.coverageDetail?.stationCoverage ?? 0,
+      coverageDetail: metadata.coverageDetail,
+      association,
+      gate: metadata.gate,
+      note
+    }
+  })
+  return published
 }
 
 function cmdRollback(version) {
@@ -666,7 +648,6 @@ function cmdRollback(version) {
   if (!fs.existsSync(file)) throw new Error(`版本不存在：${version}`)
   const metadata = JSON.parse(fs.readFileSync(file, 'utf8'))
   fs.copyFileSync(file, path.join(importedDir, 'current.json'))
-  writeStatusFile(metadata)
   writeAppNetwork(metadata, path.dirname(file))
   console.log(`已回退 current.json 到 ${version}`)
 }

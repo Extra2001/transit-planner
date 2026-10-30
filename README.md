@@ -87,6 +87,8 @@ apps/web/               # Vue 3 + Pinia + TypeScript + Vite PWA
 scripts/sync-cities.mjs # 只把允许再分发的城市数据同步进 public/
 scripts/build-data.mjs  # 北京适配器：原始时刻表 → cities/beijing/network.json
 tools/changchun-import/ # 长春适配器（采集/解析/重建/发布）
+tools/demo-city/        # 合成示例城市适配器（测试夹具，证明新增城市零改码）
+scripts/lib/            # v1→v2 归一化、统一发布层
 research/               # 调研报告与原始材料快照
 ```
 

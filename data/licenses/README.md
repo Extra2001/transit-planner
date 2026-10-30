@@ -7,6 +7,7 @@
 | 代码 | `packages/`、`apps/`、`scripts/`、`tools/` | MIT（见根目录 `LICENSE`） | 本项目原创 |
 | 北京时刻数据 | `cities/beijing/network.json` | CC BY-SA 4.0 | 见 [beijing.md](beijing.md) |
 | 长春时刻数据 | `cities/changchun/network.json`（不入库） | 未确认 | 见 [changchun.md](changchun.md) |
+| 合成示例城市 | `cities/demo/network.json` | CC0 1.0 | 允许，见 [demo.md](demo.md) |
 | 调研原始材料 | `research/` | 多种，且多为「仅研究」 | 见 [research-artifacts.md](research-artifacts.md) |
 
 ## 三条硬规则
